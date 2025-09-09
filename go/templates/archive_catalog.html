@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link
+            rel="icon"
+            type="image/png"
+            href="/favicon.ico/favicon-96x96.png"
+            sizes="96x96"
+        />
+        <link rel="icon" type="image/svg+xml" href="/favicon.ico/favicon.svg" />
+        <link rel="shortcut icon" href="/favicon.ico/favicon.ico" />
+        <link
+            rel="apple-touch-icon"
+            sizes="180x180"
+            href="/favicon.ico/apple-touch-icon.png"
+        />
+        <meta name="apple-mobile-web-app-title" content="CNQSO" />
+        <link rel="manifest" href="/favicon.ico/site.webmanifest" />
+        <title>Petrarchive</title>
+        <link rel="stylesheet" href="/static/css/petrarchan.css" />
+    </head>
+    <body>
+        <div class="header">
+            <h1>Petrarchive</h1>
+        </div>
+
+        <div class="catalog">
+            {{if .Threads}} {{range .Threads}}
+            <a href="/petrarchive/thread/{{.ID}}" class="thread-link">
+                <div class="thread-card">
+                    <div class="thread-header">
+                        <span class="thread-id">{{.ID}}</span>
+                        <span class="thread-date"
+                            >{{.EST.Format "2006-01-02 15:04"}}</span
+                        >
+                    </div>
+
+                    {{if .Title}}
+                    <div class="thread-title">{{.Title}}</div>
+                    {{else}}
+                    <div class="thread-title no-title">No title</div>
+                    {{end}}
+
+                    <div class="thread-main-content">
+                        {{if .ImageURL}}
+                        <img
+                            src="{{.ImageURL | thumbnailURL}}"
+                            alt="Thread image"
+                            class="thread-image"
+                        />
+                        {{end}}
+
+                        <div
+                            class="thread-content {{if gt (len .Contents) 200}}truncated{{end}}"
+                        >
+                            {{if gt (len .Contents) 200}} {{processContent
+                            (slice .Contents 0 200) .Thread}} {{else}}
+                            {{processContent .Contents .Thread}} {{end}}
+                        </div>
+                    </div>
+
+                    <div class="thread-footer">
+                        <span class="thread-poster">{{.Poster}}</span>
+                        <span class="thread-replies">{{.Replies}} replies</span>
+                    </div>
+                </div>
+            </a>
+            {{end}} {{else}}
+            <div class="no-threads">No archived threads found</div>
+            {{end}}
+        </div>
+    </body>
+</html>

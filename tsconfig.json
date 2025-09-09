@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "target": "ES2017",
+        "module": "ES6",
+        "moduleResolution": "node",
+        "outDir": "./go/static/js",
+
+        "rootDir": "./ts",
+        "lib": ["DOM", "ES2017"]
+    },
+    "include": ["./**/*"],
+    "exclude": ["node_modules", "js/**/*"]
+}

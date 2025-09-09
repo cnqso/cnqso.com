@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="icon" type="image/png" href="/favicon.ico/favicon-96x96.png" sizes="96x96" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.ico/favicon.svg" />
+        <link rel="shortcut icon" href="/favicon.ico/favicon.ico" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/favicon.ico/apple-touch-icon.png" />
+        <meta name="apple-mobile-web-app-title" content="CNQSO" />
+        <link rel="manifest" href="/favicon.ico/site.webmanifest" />
+        <title>cnqso.com</title>
+    </head>
+    <style>
+        .flex-row {
+            display: flex;
+            justify-content: left;
+            align-items: top;
+            gap: 20px;
+            flex-direction: row;
+        }
+        .bokce {
+            position: relative;
+        }
+        .bokce img {
+            position: absolute;
+            bottom: 0;
+            transition: transform 0.3s ease-in-out;
+        }
+        .bokce img:hover {
+            cursor: pointer;
+        }
+    </style>
+
+    <body>
+        <h1>cnqso.com</h1>
+
+        <div class="flex-row">
+            <div class="bokce">
+                <div>
+                    <p>Vanilla Go HTTP server</p>
+                    <p>Ooh it compiles so fast</p>
+                </div>
+
+                <div>
+                    {{range .Routes}}
+                    <div>
+                        <a href="{{.}}">{{.}}</a>
+                    </div>
+                    {{end}}
+                </div>
+                <div>This list was generated at runtime</div>
+            </div>
+            <div class="bokce">
+                <img
+                    src="/static/images/SecretDoor.png"
+                    width="100"
+                    height="280"
+                    alt="You Cannot Enter"
+                />
+            </div>
+        </div>
+    </body>
+
+    <script src="static/js/index.js"></script>
+</html>

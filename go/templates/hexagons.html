@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link
+            rel="icon"
+            type="image/png"
+            href="/favicon.ico/favicon-96x96.png"
+            sizes="96x96"
+        />
+        <link rel="icon" type="image/svg+xml" href="/favicon.ico/favicon.svg" />
+        <link rel="shortcut icon" href="/favicon.ico/favicon.ico" />
+        <link
+            rel="apple-touch-icon"
+            sizes="180x180"
+            href="/favicon.ico/apple-touch-icon.png"
+        />
+        <meta name="apple-mobile-web-app-title" content="CNQSO" />
+        <link rel="manifest" href="/favicon.ico/site.webmanifest" />
+        <title>Hexagons</title>
+        <script type="module" src="/static/js/hexagons.js"></script>
+        <style>
+
+            body {
+                display: flex;
+                justify-content: center;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            #canvas {
+                display: block;
+                image-rendering: smooth;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            #config {
+                position: fixed;
+                top: 10px;
+                right: 10px;
+                width: 7.5rem;
+            }
+
+            #config > div > label > input,
+            #config > div > div > label > input,
+            #config > div > label > select {
+                width: 7rem;
+            }
+
+            /* Responsive dropdown for narrow screens */
+            @media (max-width: 768px) {
+                #config {
+                    width: auto;
+                    right: 5px;
+                }
+                #config > div:not(#config-toggle),
+                #config > fieldset,
+                #config > hr {
+                    display: none;
+                }
+                #config.expanded > div:not(#config-toggle),
+                #config.expanded > fieldset,
+                #config.expanded,
+                #config-toggle {
+                    display: block;
+                    cursor: pointer;
+                    background: rgba(255, 255, 255, 0.7);
+                }
+            }
+
+            @media (min-width: 769px) {
+                #config-toggle {
+                    display: none;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <canvas id="canvas"></canvas>
+        <div id="config">
+            <div id="config-toggle">⚙ Settings</div>
+            <div>
+                <label
+                    >Base color
+                    <input
+                        id="baseColor"
+                        type="text"
+                        value="#1f1f1f"
+                        placeholder="#1f1f1f"
+                        maxlength="7"
+                        minlength="1"
+                    />
+                </label>
+            </div>
+            <div>
+                <label
+                    >Signal color
+                    <input
+                        id="sigColor"
+                        type="text"
+                        value="#f5e0dc"
+                        placeholder="#f5e0dc"
+                        maxlength="7"
+                        minlength="1"
+                    />
+                </label>
+            </div>
+            <div>
+                <label
+                    >Frame delay
+                    <input
+                        id="sigSpeed"
+                        type="number"
+                        value="15"
+                        min="1"
+                        step="1"
+                    />
+                </label>
+            </div>
+            <div>
+                <label
+                    >Signal lifetime
+                    <input
+                        id="sigLife"
+                        type="number"
+                        min="1"
+                        step="1"
+                    />
+                </label>
+            </div>
+            <div>
+                <label
+                    >Grid Type
+                    <select id="gridType">
+                        <option value="radial">Radial</option>
+                        <option value="axial">Axial</option>
+
+                    </select>
+                </label>
+            </div>
+            <div id="axialControls"  style="display: none;">
+                <div>
+                    <label
+                        >Axial Width
+                        <input
+                            id="axialWidth"
+                            type="number"
+                            value="20"
+                            min="2"
+                            step="2"
+                        />
+                    </label>
+                </div>
+                <div>
+                    <label
+                        >Axial Height
+                        <input
+                            id="axialHeight"
+                            type="number"
+                            value="8"
+                            min="2"
+                            step="2"
+                        />
+                    </label>
+                </div>
+            </div>
+            <div id="radialControls">
+
+                    <label
+                        >Grid Radius
+                        <input
+                            id="gridRadius"
+                            type="number"
+                            value="7"
+                            min="1"
+                            step="1"
+                        />
+                    </label>
+
+            </div>
+            <hr/>
+            <fieldset>
+                <legend>Rules</legend>
+                <div>
+                    <label
+                        ><input
+                            id="deleteOnPropagation"
+                            type="checkbox"
+
+                        />Die on propagating</label
+                    >
+                </div>
+                <div>
+                    <label
+                        ><input
+                            id="deleteOnCollision"
+                            type="checkbox"
+                            checked
+                        />Die on collision</label
+                    >
+                </div>
+            </fieldset>
+            <hr/>
+            <fieldset>
+                <legend>Travel directions</legend>
+                <label
+                    ><input
+                        type="checkbox"
+                        class="dir"
+                        data-q="+1"
+                        data-r="0"
+                        checked
+                    />
+                    SE (+1, 0)</label
+                ><br />
+                <label
+                    ><input
+                        type="checkbox"
+                        class="dir"
+                        data-q="+1"
+                        data-r="-1"
+                        checked
+                    />
+                    NE (+1,-1)</label
+                ><br />
+                <label
+                    ><input
+                        type="checkbox"
+                        class="dir"
+                        data-q="0"
+                        data-r="-1"
+                        checked
+                    />
+                    N (0,-1)</label
+                ><br />
+                <label
+                    ><input
+                        type="checkbox"
+                        class="dir"
+                        data-q="-1"
+                        data-r="0"
+                        checked
+                    />
+                    NW (-1, 0)</label
+                ><br />
+                <label
+                    ><input
+                        type="checkbox"
+                        class="dir"
+                        data-q="-1"
+                        data-r="+1"
+                        checked
+                    />
+                    SW (-1,+1)</label
+                ><br />
+                <label
+                    ><input
+                        type="checkbox"
+                        class="dir"
+                        data-q="0"
+                        data-r="+1"
+                        checked
+                    />
+                    S (0,+1)</label
+                >
+            </fieldset>
+            <hr/>
+            <div>
+                <input id="paused" type="checkbox" >Pause</input>
+            </div>
+            <div><button id="reset">Reset</button></div>
+
+            <!--<div>
+                <button id="applyConfig">Apply changes</button>
+            </div>-->
+        </div>
+        <script>
+            document.getElementById('config-toggle').addEventListener('click', function() {
+                document.getElementById('config').classList.toggle('expanded');
+            });
+        </script>
+    </body>
+</html>

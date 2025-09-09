@@ -1,0 +1,254 @@
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" x="0" y="0" version="1.1" viewBox="0 0 960 960">
+  <path d="M970 430v540H10V580l80 50 10 20c0 50 20 70 50 90 60 10 80-40 120-50h10v30l-10 80 20 30 50 60c50 70 130 60 200 50h10l70-10 30-30v-20h20l80-60-20-70v-60l-20-110-50-50 10-10v-20l20-40-10-40-10-100-10-60-40-120c-10-50-30-90-90-90h-30l-20 10c-20-20-40-30-50 0l-40-10-90 90-10-30-10-30-10-10c-20-30-50-30-70 0 30 40 30 40-10 70l-20-30a2360 2360 0 01 0-100h800v310l-60-20h-70l20-30h-20l10-30 20-30 20-80V80l-40 20-40-40h-40c-10 50-50 50-90 40v70l40 130 30 20 10 20c-40 30-60 70-60 120l20 60 40 20c10 70 60 60 100 70 50-10 60-30 60-70s0-90 50-110" fill="#000" opacity="1"/>
+  <path d="M10 480V10h130v20l-10 10-40 20c-40 20-40 50-10 80 0 80 50 110 90 150l-30 60-30 10 30 10 30 30 20 20c50 0 20-30 30-50l30-50c-20-30 0-50 10-80l30-30v280l-30 10h-30l-40-10-20-20c-60-40-80-40-150 10H10" fill="#000" opacity="1"/>
+  <path d="M970 430c-50 20-50 70-50 110s-10 60-60 70v-30c40-30 30-70 30-110v-20l10-20 40-90-80-20 50-20 60 20v110" fill="#EBDF9A" opacity="1"/>
+  <path d="M10 480h10c70-50 90-50 150-10l20 20h-40c-20-20-50-40-80-10-20 30-30 60 0 100l20 50-80-50V480" fill="#E4E78E" opacity="1"/>
+  <path d="M140 30V10h30l-10 20h-20" fill="#6D7F99" opacity="1"/>
+  <path d="M290 490V210l10-70 90-90 40 10-30 60-30 40c-20 50 10 40 40 50l20 10-10 20v20h-10l-40-20c-30-10-40 10-40 30l20 80 60 20 10 10-20 90h30l-10 10-120 40-10-30" fill="#D38822" opacity="1"/>
+  <path d="M530 50c60 0 80 40 90 90l40 120-20 80-30-40-40 30-20-20-10-30-10-20 10-30v-40a370 370 0 01 40 20l-20-80c-40-40 30-10 10-50l-40-30" fill="#D8841A" opacity="1"/>
+  <path d="M670 880h-20l-20-10h-20v-60h10l10-10v-20l-30-10 10-20v-40l-20-10v-10h20l20-40h20l60 20v30l-20 40v10l30 50-50 80" fill="#E7E493" opacity="1"/>
+  <path d="m90 630-20-50c-30-40-20-70 0-100 30-30 60-10 80 10h40l40 10c-20 20-50 20-50 60h-30v30h-10l10 10v30l-20 10-30 10-10-20" fill="#E73B38" opacity="1"/>
+  <path d="m690 470-20 30-30 20-20 10-10 10h-20l-20-60h-40v-20h10l20-20v-30l10-60 80 20 10 50-80 20c10 40 40 50 60 30l30-20 20 20" fill="#D88E22" opacity="1"/>
+  <path d="m560 130 20 80-40-20v-20h-10l10 20v30l-50-10-40-80-20 40-40-10h-20l30-40 30-60c10-30 30-20 50 0l-40 20c40 10 30 70 80 50h40m-50 30" fill="#C16E16" opacity="1"/>
+  <path d="m750 320-30-20-40-140 20-10 50 20v10l30 30v40l-10 30-20 10v30" fill="#A4ADB0" opacity="1"/>
+  <path d="M540 940c-70 10-150 20-200-50l-50-60 10-50 50 20v50l10 30 40 30 30 10 30-10h20l20-10h10l30 40" fill="#CAB384" opacity="1"/>
+  <path d="m300 140-10 70-30 30-50 10v-70c30 0 40 10 30-30 0-20-10-70 30-80v10l20 30 10 30" fill="#A4B3BD" opacity="1"/>
+  <path d="M270 70c-40 10-30 60-30 80 10 40 0 30-30 30l-10-10-50-40 10-20h10l20 30c40-30 40-30 10-70 20-30 50-30 70 0" fill="#5E799C" opacity="1"/>
+  <path d="M560 130h-40c-50 20-40-40-80-50l40-20 20-10h30l40 30c20 40-50 10-10 50" fill="#DD8414" opacity="1"/>
+  <path d="m910 300-50 20-10 20-20 20-20 10c-50 0-80 10-90 60l-10 30c-10-50 10-90 50-120h10l40-30h10l20-10h70" fill="#EFE9AD" opacity="1"/>
+  <path d="m640 520 30-20v20l-10 10 50 50c10 30-20 50 10 70l-10 10-60-10v-30l-10-10h-10v-20l10-30v-40m50 90v10-10" fill="#CCA77C" opacity="1"/>
+  <path d="m750 170-50-20-20 10v-60c40 10 80 10 90-40h20v70l-40 40" fill="#567C99" opacity="1"/>
+  <path d="M780 250v-50l50-20 20-20v-10h20v60l-20 30-20 10-20-10-20 10h-10" fill="#E12E5B" opacity="1"/>
+  <path d="m690 460-20-10-10-30-20-50v-30l20-80 10 60 10 100 10 40" fill="#D6A860" opacity="1"/>
+  <path d="M270 690c-40 10-60 60-110 50l30-10-30-20 20-20 40-20v-10l30-10h20v40" fill="#E1DD9E" opacity="1"/>
+  <path d="m670 880 50-80-30-50h40l20 70-80 60" fill="#C0A875" opacity="1"/>
+  <path d="m540 940-30-40h20l90-10h10l20 10-30 30-70 10h-10" fill="#CFB07A" opacity="1"/>
+  <path d="m160 710 30 20-40 10c-30-20-50-40-50-90l30-10 10 20 20 50" fill="#E1E08C" opacity="1"/>
+  <path d="M860 580v20c-40 0-90 10-100-60l40 30 60 10" fill="#E6DC95" opacity="1"/>
+  <path d="M860 150h-20l-20-20 30-30 40-20v50h-10l-20 20" fill="#4F7095" opacity="1"/>
+  <path d="m300 780-10 50-20-30 10-80h10v40a90 90 0 00 10 20" fill="#B99486" opacity="1"/>
+  <path d="m700 460 30-30 10 10 10 10-10 10-10 60h-10l-20-60" fill="#E9DC75" opacity="1"/>
+  <path d="m850 100-30 30-20-20V90l10-30 40 40" fill="#706888" opacity="1"/>
+  <path d="M170 110h-10l-10-30V50l-20-10 10-10h20l10 80" fill="#46628C" opacity="1"/>
+  <path d="M880 130h10l-20 80v-60l10-20" fill="#706D89" opacity="1"/>
+  <path d="M730 750h-40v-10l20-40v-30l10-10v30l10 50v10" fill="#C9AE74" opacity="1"/>
+  <path d="M720 690v-40c-30-20 0-40-10-60l20 100h-10" fill="#D2B68C" opacity="1"/>
+  <path d="M720 690h10v50l-10-50" fill="#C0A875" opacity="1"/>
+  <path d="m840 300-20 10v-20l20-20h20l-20 30" fill="#77838D" opacity="1"/>
+  <path d="m650 900-20-10v-20l20 10v20" fill="#EFEAE6" opacity="1"/>
+  <path d="M270 690v-50l20 10v30l-10 10h-10" fill="#B99486" opacity="1"/>
+  <path d="m280 690 10-10v40h-10v-30" fill="#CAB384" opacity="1"/>
+  <path d="M720 520h30l10 20-40-20" fill="#E9DE77" opacity="1"/>
+  <path d="M800 90v20h-10a1790 1790 0 01 10-50v30" fill="#B77078" opacity="1"/>
+  <path d="M800 90V70l10-10-10 30" fill="#C5475F" opacity="1"/>
+  <path d="m290 110-20-30c10 10 20 10 20 30" fill="#5E799C" opacity="1"/>
+  <path d="m830 250 20-10-10 30h-10v-20" fill="#BB446C" opacity="1"/>
+  <path d="M770 340h-10l-10-20v-10l20 10v20" fill="#93A0A5" opacity="1"/>
+  <path d="M520 50h-20 20" fill="#D8841A" opacity="1"/>
+  <path d="M540 940h10-10" fill="#CAB384" opacity="1"/>
+  <path d="m290 650-20-10v-30l10-20v-40l-20-50 30-10 10 40 50 30v20l-10 10-10 20-40 40" fill="#EBE4BA" opacity="1"/>
+  <path d="m260 500 20 50-10 40-20-10-50-10-20-10c0-40 30-40 50-60h30" fill="#E0CC67" opacity="1"/>
+  <path d="m210 250 50-10c-10 30-30 50-10 80l-30 50-30 10v-30l10-60v-20l10-10v-10" fill="#677B94" opacity="1"/>
+  <path d="M170 290c-40-40-90-70-90-150h20l10 30 40 60 20 20 10 20v10l-10 10" fill="#626A8F" opacity="1"/>
+  <path d="M100 140H80c-30-30-30-60 10-80l40-20v20l-20 20-10 60" fill="#787A96" opacity="1"/>
+  <path d="m190 380 30-10c-10 20 20 50-30 50v-40" fill="#5E6D8B" opacity="1"/>
+  <path d="M190 380v40l-20-20v-30h-20l10-20h30v30" fill="#AC557B" opacity="1"/>
+  <path d="M170 350h-30l30-60 10-10 10 10-20 60" fill="#565B89" opacity="1"/>
+  <path d="M140 350h10v20h-10l-30-10 30-10" fill="#B34E6D" opacity="1"/>
+  <path d="M140 370h30v30l-30-30" fill="#7C8286" opacity="1"/>
+  <path d="m850 340 10-20 80 20-40 90-30-10 20-40-40-20v-20" fill="#ED3334" opacity="1"/>
+  <path d="m860 580-60-10v-60h30l20 10h20l20-40c0 30 10 70-30 100" fill="#E24948" opacity="1"/>
+  <path d="m890 470-20 50-20-10 10-20 20-50 10 10v20" fill="#DCC79F" opacity="1"/>
+  <path d="m890 450-10-10-10-20 30 10-10 20" fill="#E93B3F" opacity="1"/>
+  <path d="m420 380-10-10v-50h10l10 10h10l10-40-10-30 30 50 30-40v60l30 20-40 70-50-20-20-20" fill="#C96252" opacity="1"/>
+  <path d="M410 320v50l-60-20-20-80c0-20 10-40 40-30-10 30-10 50 20 50h20v30" fill="#C27014" opacity="1"/>
+  <path d="m500 260-30 50-30-50h-20v-20l10-20 60-10 50 20-10 30h-30" fill="#E8393A" opacity="1"/>
+  <path d="m350 550-40-20 120-50v40l-10 10-20 20h-50" fill="#DA9D3B" opacity="1"/>
+  <path d="m490 210-60 10-20-10v-20l20-20 20-40 40 80" fill="#DA881D" opacity="1"/>
+  <path d="m420 380 20 20-10 20v50h-30l20-90" fill="#D68C29" opacity="1"/>
+  <path d="M390 290c-30 0-30-20-20-50l40 20-10 10-10 20" fill="#D98617" opacity="1"/>
+  <path d="M410 190v20c-30-10-60 0-40-50l40 20v10" fill="#C16E16" opacity="1"/>
+  <path d="M430 470v-50l20 10v50l-10 10v10h-10v-30" fill="#B6AEA7" opacity="1"/>
+  <path d="M420 240v10-10zm-10 20h10v10h-10v-10" fill="#DD6436" opacity="1"/>
+  <path d="M490 420a680 680 0 00 40-80h10l10-30 20 20v20l-10 60-10 10-20 10h-10l-30-10" fill="#E74240" opacity="1"/>
+  <path d="M570 350v-20l40-30 30 40v30l-70-20" fill="#C07218" opacity="1"/>
+  <path d="m550 310-10 20v-50l10 30" fill="#D3A590" opacity="1"/>
+  <path d="m530 260 10 20h-10l-10-20h10" fill="#B59988" opacity="1"/>
+  <path d="M580 210" fill="#C16E16" opacity="1"/>
+  <path d="M640 530v40l-10 20v60l-20 40-10-40v-60l10-10a9280 9280 0 00 10-50h20" fill="#E8DDDB" opacity="1"/>
+  <path d="m600 770 20 10-30 30h-20l-10-10-10 10h-10l20-50 40 10" fill="#DCD099" opacity="1"/>
+  <path d="M610 710v40l-50-10-10-20h10l30-20 10 20 10-10" fill="#DDC5A7" opacity="1"/>
+  <path d="m590 700-30 20v-30l30-30v40" fill="#F0EAE7" opacity="1"/>
+  <path d="m570 740 40 10-10 20-40-10 10-20" fill="#EDEE7B" opacity="1"/>
+  <path d="M610 830v40h-10l-30-50 40 10" fill="#EFECE8" opacity="1"/>
+  <path d="m590 810 40-30v20l-10 10h-30" fill="#F2F0EF" opacity="1"/>
+  <path d="M590 810h20v20l-40-10v-10h20" fill="#D1B59C" opacity="1"/>
+  <path d="M600 870h30v20h-10l-20-20" fill="#D8C4AA" opacity="1"/>
+  <path d="M630 650v-20h20v10l-10 10h-10" fill="#D3B39D" opacity="1"/>
+  <path d="M590 690v-30h10l10 30h-20" fill="#CBADA7" opacity="1"/>
+  <path d="m610 710-10 10-10-20 20 10" fill="#F3E9E8" opacity="1"/>
+  <path d="m640 650 10-10v10h-10" fill="#DEC79D" opacity="1"/>
+  <path d="m180 560 20 10 20 10 20 40h-10a560 560 0 01-40-20l-30-40h20" fill="#DFAF6E" opacity="1"/>
+  <path d="M150 630v-30h40l10 20 10 30h-20l-10-10a140 140 0 00-30-10" fill="#DCBC75" opacity="1"/>
+  <path d="m140 660-10-20 20-10 20 40-30-10" fill="#DEB26F" opacity="1"/>
+  <path d="M190 600h-40v-40h10l30 40" fill="#DE6441" opacity="1"/>
+  <path d="M160 560h-10 10" fill="#DFAF6E" opacity="1"/>
+  <path d="M150 590v10l-10-10h10" fill="#DCBC75" opacity="1"/>
+  <path d="m570 490 20 50-10 40-70 40V500h10c20 10 50 30 50-10" fill="#E1DCD4" opacity="1"/>
+  <path d="m660 420 10 30-30 20c-20 20-50 10-60-30l80-20" fill="#BB7119" opacity="1"/>
+  <path d="M570 480c0 50-30 30-50 20l10-20h40" fill="#BCBDB5" opacity="1"/>
+  <path d="M530 470h-20l-30-10v-20h30l20 30" fill="#9F8074" opacity="1"/>
+  <path d="m580 580 10-40h20v40h-30" fill="#E4CFC3" opacity="1"/>
+  <path d="m530 430 20-10 10 30-20 10-10-30" fill="#AF8982" opacity="1"/>
+  <path d="M510 470h20v10l-10 20h-10v-30" fill="#ECEDE6" opacity="1"/>
+  <path d="m530 430 10 30h-10l-20-20 10-10h10" fill="#CEB7A8" opacity="1"/>
+  <path d="m560 440-10-20 10-10v30" fill="#BDB3A4" opacity="1"/>
+  <path d="M640 530h-20l20-10v10" fill="#E4CFC3" opacity="1"/>
+  <path d="M410 190v-10l-20-20 40 10-20 20" fill="#D38822" opacity="1"/>
+  <path d="m390 160 20 20-40-20h20" fill="#DA881D" opacity="1"/>
+  <path d="m540 190-10-20h10v20" fill="#D8841A" opacity="1"/>
+  <path d="M510 160" fill="#DA881D" opacity="1"/>
+  <path d="M780 200v10l-30-20 20-20 10-10v40" fill="#527793" opacity="1"/>
+  <path d="M820 290v10l-10 10h-20l-10-30v-30h10l20 40h10" fill="#C63B65" opacity="1"/>
+  <path d="m770 280 20 30-20 10-20-10v-10l20-20" fill="#666282" opacity="1"/>
+  <path d="m770 170-20 10v-10h20" fill="#CFDDE0" opacity="1"/>
+  <path d="m770 280-20 20v-10l20-10zm-20 10" fill="#93A0A5" opacity="1"/>
+  <path d="m400 910-40-30v-30c40 0 40-20 40-50l-10-60 30 20h30v20l30 10-10 10-30 70h-10l-20 30-10 10" fill="#E6E286" opacity="1"/>
+  <path d="m390 740 10 60c0 30 0 50-40 50l-10-50 10-40v-10l30-10" fill="#E9E1DB" opacity="1"/>
+  <path d="m440 870 40-70v10l-10 30h-10l20 60v10h-20l-10-10-10-30" fill="#B9A682" opacity="1"/>
+  <path d="m360 760-10 40-50-20v-10l30-10h30" fill="#E2D744" opacity="1"/>
+  <path d="m450 900 10 10-30 10v-20h20" fill="#EEE850" opacity="1"/>
+  <path d="M430 910v10l-30-10 10-10 20 10" fill="#E8E993" opacity="1"/>
+  <path d="M480 910v-10h20l-20 10" fill="#C5B3B3" opacity="1"/>
+  <path d="M510 900h-10l10-30v30" fill="#000" opacity="1"/>
+  <path d="m180 270-10-20 20-10 10-10h10v30l-30 10" fill="#AD6483" opacity="1"/>
+  <path d="M210 230h-10a240 240 0 01 0-50h10v50" fill="#C098AA" opacity="1"/>
+  <path d="M200 170v20h-40l-20-30v-30h10l50 40" fill="#9190A1" opacity="1"/>
+  <path d="M150 130h-10l10-50v50" fill="#CE4572" opacity="1"/>
+  <path d="M520 130" fill="#D8841A" opacity="1"/>
+  <path d="M740 430h-10c0-50 30-60 80-50l10 20h-20l-60 30" fill="#E25849" opacity="1"/>
+  <path d="m820 400-10-20 30-20h10l40 20a610 610 0 00-20 40h-20l-20-10h-10v-10" fill="#E93B3F" opacity="1"/>
+  <path d="m770 320 20-10h20l-40 30v-20" fill="#AB587B" opacity="1"/>
+  <path d="M850 360h-10l10-20v20" fill="#E25849" opacity="1"/>
+  <path d="m650 630-20-10v-10h10l10 10v10" fill="#EFE7E3" opacity="1"/>
+  <path d="M690 610v10-10" fill="#D2B68C" opacity="1"/>
+  <path d="M630 610v-10 10" fill="#EFE7E3" opacity="1"/>
+  <path d="M790 110h10l20 20 20 20-10 10h-30l-10-10v-40" fill="#B55873" opacity="1"/>
+  <path d="M790 130v20l-10 10-10 10h-20l40-40" fill="#76989F" opacity="1"/>
+  <path d="m810 290-20-40 20-10 20 10-10 20-10 20" fill="#47477B" opacity="1"/>
+  <path d="m780 160 10-10 10 10 20 20-40 20v-40zm40 0a260 260 0 01 30 0l-20 20h-10v-20" fill="#7E718E" opacity="1"/>
+  <path d="m880 130-10 20h-10l20-20" fill="#915279" opacity="1"/>
+  <path d="M850 160h-10v-10h10v10" fill="#706888" opacity="1"/>
+  <path d="m210 650-10-30v-20l40 20 10 30-30 10h-10v-10" fill="#E33C30" opacity="1"/>
+  <path d="m140 660 30 10 10 10v10l-20 20-20-50" fill="#DF453A" opacity="1"/>
+  <path d="M180 690v-50l10 10 20 10 10 10-40 20" fill="#E43020" opacity="1"/>
+  <path d="m250 650-10-30h30a8130 8130 0 00-20 30" fill="#E5CC7D" opacity="1"/>
+  <path d="m220 670-10-10h10v10" fill="#DF5A4D" opacity="1"/>
+  <path d="m600 870 20 20-90 10-10-70v-10l20-10h10a340 340 0 00 20 0v10l30 50" fill="#E5DF96" opacity="1"/>
+  <path d="m520 830 10 70h-20v-60l10-10" fill="#B0A37D" opacity="1"/>
+  <path d="M800 510v60l-40-30-10-20 10-30 20 10 20 10" fill="#EBCA78" opacity="1"/>
+  <path d="m330 760-30 10-10-10V650l50-40 30 10v20l-10 20-10 30-30 40 10 10v20" fill="#E3DB7C" opacity="1"/>
+  <path d="m290 760 10 10v10l-10-20" fill="#CAB384" opacity="1"/>
+  <path d="m740 440 60-40 10 20-20 20-40 10-10-10" fill="#E6C28E" opacity="1"/>
+  <path d="m760 490-10 30h-20l10-60h20v30" fill="#E63F3D" opacity="1"/>
+  <path d="M760 460h-20l10-10 40-10-30 20" fill="#DC6860" opacity="1"/>
+  <path d="m150 80-10 50h-10l-10-20-10-30 20-20h20v20" fill="#E72E66" opacity="1"/>
+  <path d="M140 60h-10V40l20 10-10 10" fill="#766281" opacity="1"/>
+  <path d="m140 60 10-10v10h-10" fill="#CE4572" opacity="1"/>
+  <path d="m810 290 10-20h20l-20 20h-10" fill="#A85B7B" opacity="1"/>
+  <path d="M370 640v-40l-20-20v-20l40-10 10 30c-40 0-10 30-20 50v10h-10" fill="#D9C49D" opacity="1"/>
+  <path d="m270 610-20 10-30-40h30l20 10v20" fill="#E63525" opacity="1"/>
+  <path d="M370 600v20l-30-10v-20l30 10" fill="#EFF05A" opacity="1"/>
+  <path d="m370 600-30-10 10-10 20 20" fill="#E3DB7C" opacity="1"/>
+  <path d="M250 580h-30l-20-10 50 10" fill="#E07340" opacity="1"/>
+  <path d="m170 350 20-60h10l-10 60h-20" fill="#7A527A" opacity="1"/>
+  <path d="m180 270 30-10-10 10h-20" fill="#5B617B" opacity="1"/>
+  <path d="M180 270h20v20h-10l-10-10v-10" fill="#B55371" opacity="1"/>
+  <path d="m140 160 20 30v40h-10l-40-70h30" fill="#DC3568" opacity="1"/>
+  <path d="M140 160h-30l-10-20 10-60 10 30 10 20h10v30" fill="#A06C80" opacity="1"/>
+  <path d="M150 230h10l30 10-20 10-20-20" fill="#CA5277" opacity="1"/>
+  <path d="M170 390v-20 20" fill="#6A507F" opacity="1"/>
+  <path d="M830 510h-30l10-30 30-40 10 10-10 40-10 20" fill="#DCC5B3" opacity="1"/>
+  <path d="m830 510 10-20h20l-10 20v10l-20-10" fill="#E36162" opacity="1"/>
+  <path d="M850 520h20-20zm10-30h-20l10-40 10-30h10l10 20-20 50" fill="#DE9D81" opacity="1"/>
+  <path d="m520 430-10 10h-30l-30-10-20-10 10-20 50 20 30 10" fill="#D76854" opacity="1"/>
+  <path d="m520 260 10 20v10h-10l-10 30v10h-10v-60l20-10" fill="#211C1B" opacity="1"/>
+  <path d="M420 270v-10h20l10 30h-30v-20" fill="#231B19" opacity="1"/>
+  <path d="M430 290h10v40h-10l-10-10 10-20v-10" fill="#D7E285" opacity="1"/>
+  <path d="M440 330v-40h10l-10 40" fill="#969B68" opacity="1"/>
+  <path d="M500 330h30v20l-30-20" fill="#6C5E53" opacity="1"/>
+  <path d="M420 300v20h-10v-50h10v30" fill="#7B5049" opacity="1"/>
+  <path d="M410 270v20h-20l10-20h10" fill="#D67B22" opacity="1"/>
+  <path d="m410 590-20-40h10l30-10v10l10 40-10 10h-20v-10" fill="#EAE258" opacity="1"/>
+  <path d="m430 540-30 10 20-20h10v10" fill="#BEA46A" opacity="1"/>
+  <path d="M430 500h20v20h-20v-20zm0 30h-10l10-10v10" fill="#9C857B" opacity="1"/>
+  <path d="M410 270h-10l10-10v10" fill="#C27014" opacity="1"/>
+  <path d="m450 430 30 10v20h-30v-30" fill="#B59E8C" opacity="1"/>
+  <path d="M450 460h30v10l-10 10h-10a130 130 0 00-10 0v-20" fill="#A2847E" opacity="1"/>
+  <path d="M450 500h-10v-10h20l-10 10" fill="#CECAB2" opacity="1"/>
+  <path d="M450 490h-10l10-10v10" fill="#A2847E" opacity="1"/>
+  <path d="M530 340v-60h10v50l-10 10" fill="#454136" opacity="1"/>
+  <path d="M580 580h20v10l-10 40-90 10-40 10-10-40 10-10 20 10h10l20 10 70-40" fill="#ECEA8A" opacity="1"/>
+  <path d="m500 640 90-10 10 20-10 10-30 20c-30-20-30 10-40 20l-30-10v-40l10-10zm100-50v-10h10l-10 10" fill="#ECE592" opacity="1"/>
+  <path d="m540 810-20 10-10-10-20-30v-30l30-50 30 20 10 20v20l-20 50" fill="#E1E4CB" opacity="1"/>
+  <path d="M570 810h-20l10-10 10 10" fill="#E6D8D0" opacity="1"/>
+  <path d="m550 720-30-20c10-10 10-40 40-10v30h-10" fill="#E8E67B" opacity="1"/>
+  <path d="M200 600v20l-10-20h10" fill="#DE6441" opacity="1"/>
+  <path d="M180 640v40l-10-10-20-40 30 10" fill="#DD5F3C" opacity="1"/>
+  <path d="m210 660-20-10h20v10" fill="#DF5A4D" opacity="1"/>
+  <path d="M490 610h-10v-60l20-10h10v50l-10 20h-10" fill="#ADA49E" opacity="1"/>
+  <path d="M510 480v30l-10 10-30-10 20-30h20" fill="#ACA29B" opacity="1"/>
+  <path d="m500 610 10-20v20h-10" fill="#BF9084" opacity="1"/>
+  <path d="m500 520 10-10v30h-10v-20" fill="#A68785" opacity="1"/>
+  <path d="M500 610h10v10l-20-10h10" fill="#CEB391" opacity="1"/>
+  <path d="M510 480h-30v-10h30v10" fill="#CBC7AD" opacity="1"/>
+  <path d="M490 750v30l-10 10-30-20 10-10 30-20v10" fill="#DFE2D6" opacity="1"/>
+  <path d="m420 760-30-20-10-20h40l10 10v30h-10" fill="#F0EBEB" opacity="1"/>
+  <path d="m430 910-20-10 20-30v40" fill="#E6EABB" opacity="1"/>
+  <path d="M480 790h10l20 20h-30v-20" fill="#EAEC7C" opacity="1"/>
+  <path d="M430 900v-30h10l10 30h-20" fill="#E8E993" opacity="1"/>
+  <path d="M430 760v-30h10v30h-10" fill="#CFBBA5" opacity="1"/>
+  <path d="M440 760v-10l10 10h-10zm20 0-10 10v-10h10" fill="#ECE693" opacity="1"/>
+  <path d="M420 760h10-10" fill="#CFBBA5" opacity="1"/>
+  <path d="m380 720 10 20-30 10h-30v-10l-10-10 30-40h30v30" fill="#E4E098" opacity="1"/>
+  <path d="M330 750h30v10h-30v-10" fill="#E3DD6B" opacity="1"/>
+  <path d="m480 810 20 10 10 20v20h-30l-10-20 10-30" fill="#E5D79E" opacity="1"/>
+  <path d="m470 840 10 20a950 950 0 01 0 40l-20-60h10" fill="#000" opacity="1"/>
+  <path d="M470 840h-10 10" fill="#E6E286" opacity="1"/>
+  <path d="M480 900v-40h30v10l-10 30h-20" fill="#B1927B" opacity="1"/>
+  <path d="M180 190h20v40l-10 10-20-30 10-20" fill="#E23562" opacity="1"/>
+  <path d="m180 190-10 20h-10v-20h20" fill="#CA5277" opacity="1"/>
+  <path d="M810 420v-20h10v10l-10 10" fill="#DC6860" opacity="1"/>
+  <path d="m840 440-30 40v-30l20-40 20 10-10 20" fill="#DE8367" opacity="1"/>
+  <path d="m830 410-20 40v-30l10-10h10" fill="#EABF88" opacity="1"/>
+  <path d="m840 440 10-20h10l-10 30-10-10" fill="#DFC19A" opacity="1"/>
+  <path d="m810 160 10 20-20-20h10" fill="#A7BACB" opacity="1"/>
+  <path d="m510 840-10-20 10-10 10 10v10l-10 10" fill="#BDA47E" opacity="1"/>
+  <path d="M810 440v30l-30 30-20-10v-30l30-20h20" fill="#E8D599" opacity="1"/>
+  <path d="m780 500 30-30v10l-10 30-20-10" fill="#DE5B5C" opacity="1"/>
+  <path d="M380 690h-30l10-30 30 10h10l-20 20" fill="#CEB6A0" opacity="1"/>
+  <path d="M370 640h10v20h-20l10-20" fill="#D0B885" opacity="1"/>
+  <path d="M810 440h-20l20-20v20" fill="#DC6860" opacity="1"/>
+  <path d="m400 580 10 20v20l-10 10h-20c10-20-20-50 20-50" fill="#F5F4F3" opacity="1"/>
+  <path d="M380 630h20l10 40h-20l-10-10a690 690 0 00 0-30" fill="#E4D1CB" opacity="1"/>
+  <path d="M160 210h10l20 30-30-10v-20" fill="#605A7F" opacity="1"/>
+  <path d="M530 290v30l-20 10v-10l10-30h10" fill="#BEC781" opacity="1"/>
+  <path d="m430 300-10-10h10v10" fill="#9F9F6E" opacity="1"/>
+  <path d="m410 670-10-40 10-10 10-20h20l10 10 10 40v10l-20 60-20-10-10-40" fill="#F0E8E6" opacity="1"/>
+  <path d="m450 610-10-10v-10l-10-40h50v10l-20 30v10l-10 10" fill="#E8DA83" opacity="1"/>
+  <path d="m420 600-10 20v-20h10" fill="#D7B895" opacity="1"/>
+  <path d="M440 550h-10v-10l10 10" fill="#BEA46A" opacity="1"/>
+  <path d="M440 590v10h-10l10-10" fill="#D7B895" opacity="1"/>
+  <path d="m440 550-10-10v-20h20l10 30h-20" fill="#BCA394" opacity="1"/>
+  <path d="M470 480h20l-20 30-20 10v-20l10-10v-10h10" fill="#E8E9DF" opacity="1"/>
+  <path d="M460 480v10h-10v-10h10" fill="#AFA299" opacity="1"/>
+  <path d="m500 640-10 10h-30l40-10" fill="#E8E67B" opacity="1"/>
+  <path d="M460 600v-10h20v10h-20" fill="#CEB391" opacity="1"/>
+  <path d="m460 660 30-10v90l-30 20h-10l-10-20v-20l20-60" fill="#ECEA8A" opacity="1"/>
+  <path d="M490 740v-50l30 10-30 50v-10zm0-50v-20 20" fill="#E8E67B" opacity="1"/>
+  <path d="m450 520 20-10 30 10v20l-20 10h-20l-10-30" fill="#C1927C" opacity="1"/>
+  <path d="M480 590h-10l10-30v30" fill="#E3DAD4" opacity="1"/>
+  <path d="M380 720v-10h40v10h-40" fill="#CDB58D" opacity="1"/>
+  <path d="M420 720v-10l20 10v10h-10l-10-10zm0-10h-40v-20l20-20h10l10 40" fill="#ECE693" opacity="1"/>
+  <path d="m380 660 10 10-30-10h20" fill="#F1EDEA" opacity="1"/>
+</svg>

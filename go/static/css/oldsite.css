@@ -1,0 +1,188 @@
+@font-face {
+    font-family: perfectDOS;
+    src: url(../fonts/bluescreen.ttf);
+}
+
+html {
+    -webkit-font-smoothing: none;
+}
+
+canvas {
+    position: absolute;
+    z-index: -100;
+    width: 100%;
+    Height: 98.5%;
+    opacity: 2;
+}
+
+:root {
+    --g1: rgb(61, 0, 0);
+    --g2: rgb(240, 121, 161);
+    --g3: rgb(255, 255, 255);
+    --g4: rgb(219, 250, 255);
+}
+
+@keyframes background-pan {
+    from {
+        background-position: 0% center;
+    }
+
+    to {
+        background-position: -200% center;
+    }
+}
+
+@keyframes example {
+    from {
+        background-color: #ffffff;
+        ;
+    }
+
+    to {
+        background-color: black
+    }
+}
+
+body {
+    animation: example 1s linear;
+    background: fixed;
+    background-color: black;
+    margin: 0 auto;
+    font-family: "JetBrains Mono", "Fira Code", "Consolas", "Monaco", monospace;
+    font-size: 12pt;
+    color: #46eeff;
+}
+
+h1,
+h2 {
+    font-family: "perfectDOS";
+    font-weight: normal;
+    color: #f37aed;
+    font-size: 32px;
+    opacity: 2;
+    transition: opacity 1200ms ease;
+}
+
+h3,
+h4 {
+    font-weight: normal;
+    color: #f37aed;
+    font-size: 32px;
+    opacity: 2;
+    transition: opacity 1200ms ease;
+}
+
+
+header {
+    width: 100%;
+    height: 110px;
+    background-image: url("babytron.png");
+    background-repeat: repeat-x;
+    opacity: 2;
+    transition: opacity 1200ms ease;
+}
+
+
+
+nav {
+    width: 100%;
+    height: 30px;
+    line-height: 30px;
+    display: table;
+    opacity: 2
+}
+
+
+
+
+
+.navlink {
+    height: 100%;
+    width: 20%;
+    display: inline-block;
+    text-align: center;
+    vertical-align: bottom;
+}
+
+main {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 10px;
+    width: 100%;
+    height: calc(100vh - 90px);
+    min-width: 0;
+    overflow: hidden;
+}
+
+.leftBar,
+.rightBar {
+    flex: 0 2 11ch;
+    min-width: 5ch;
+    max-width: 11ch;
+    max-height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2px;
+}
+
+.center {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+}
+
+/*
+.leftBar {
+    max-width: 100px;
+    float: left;
+    margin: 0px 10px 5px 5px;
+    padding: 0 6px 0 6px;
+    text-align: right;
+    overflow: hidden;
+    max-height: 100%;
+    font-family: "perfectDOS";
+}
+
+.rightBar {
+    max-width: 100px;
+    float: right;
+    padding: 0 6px 0 6px;
+    margin: 0 0 5px 5px;
+    text-align: left;
+    overflow: hidden;
+    max-height: 100%;
+    font-family: "perfectDOS";
+}
+
+.center {}*/
+
+
+
+
+hr {
+    border: 0;
+    border-top: 1px solid #25CED1;
+    height: 2px;
+    border-bottom: 1px solid #623CEA;
+    transition: opacity 1200ms ease;
+    opacity: 2;
+}
+
+hr.two {
+    border: 0;
+    border-top: 5px solid #25CED1;
+    height: 3px;
+    border-bottom: 5px solid #623CEA;
+    transition: opacity 1200ms ease;
+    opacity: 2;
+}
+
+a {
+    color: #46eeff;
+}

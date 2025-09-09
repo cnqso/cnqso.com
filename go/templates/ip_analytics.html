@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>IP Analytics - {{.IP}}</title>
+        <link rel="stylesheet" href="/static/css/catpuccin.css" />
+        <style>
+            body {
+                margin: 0;
+                padding: 20px;
+                background-color: var(--ctp-latte-base);
+                color: var(--ctp-latte-text);
+            }
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+            }
+            .controls {
+                text-align: center;
+                margin-bottom: 30px;
+                background: var(--ctp-latte-crust);
+                padding: 20px;
+            }
+            .dashboard-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+                gap: 20px;
+                margin-bottom: 20px;
+            }
+            .card {
+                background: var(--ctp-latte-crust);
+                padding: 20px;
+            }
+            .card h2 {
+                margin-top: 0;
+                color: var(--ctp-latte-text);
+                font-size: 18px;
+                border-bottom: 2px solid var(--ctp-latte-crust);
+                padding-bottom: 10px;
+            }
+            .metric-list {
+                max-height: 400px;
+                overflow-y: scroll;
+            }
+            .metric-item {
+                display: flex;
+                justify-content: space-between;
+                padding: 8px 0;
+                border-bottom: 1px solid var(--ctp-latte-overlay0);
+            }
+            .metric-item:last-child {
+                border-bottom: none;
+            }
+            .metric-label {
+                flex: 1;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                margin-right: 10px;
+                font-family: monospace;
+                font-size: 13px;
+            }
+            .metric-label.clickable {
+                color: var(--ctp-latte-blue);
+                cursor: pointer;
+                text-decoration: underline;
+            }
+            .metric-label.clickable:hover {
+                color: var(--ctp-latte-sapphire);
+            }
+            .metric-value {
+                font-weight: bold;
+                color: var(--ctp-latte-blue);
+                min-width: 60px;
+                text-align: right;
+                margin-right: 10px;
+            }
+            .error-metric .metric-value {
+                color: var(--ctp-latte-red);
+            }
+            .loading {
+                text-align: center;
+                padding: 40px;
+                color: var(--ctp-latte-subtext0);
+            }
+            .error {
+                text-align: center;
+                padding: 40px;
+                color: var(--ctp-latte-red);
+                background: var(--ctp-latte-mantle);
+                margin: 20px 0;
+            }
+            .stats-summary {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
+                margin-bottom: 30px;
+            }
+            .stat-box {
+                background: var(--ctp-latte-mantle);
+                padding: 20px;
+                text-align: center;
+            }
+            .stat-number {
+                font-size: 24px;
+                font-weight: bold;
+                color: var(--ctp-latte-text);
+            }
+            .stat-label {
+                font-size: 12px;
+                color: var(--ctp-latte-subtext0);
+                margin-top: 5px;
+            }
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
+                margin-bottom: 30px;
+            }
+            .stat-box {
+                background: var(--ctp-latte-crust);
+                padding: 20px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                text-align: center;
+            }
+            .stat-number {
+                font-size: 24px;
+                font-weight: bold;
+                color: var(--ctp-latte-text);
+            }
+            .stat-label {
+                font-size: 12px;
+                color: var(--ctp-latte-subtext0);
+                margin-top: 5px;
+            }
+            .error-stat .stat-number {
+                color: var(--ctp-latte-red);
+            }
+            .analytics-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+                margin-bottom: 30px;
+            }
+            .full-width {
+                grid-column: 1 / -1;
+            }
+            .metric-list {
+                max-height: 300px;
+                overflow-y: auto;
+            }
+            .metric-item {
+                display: flex;
+                justify-content: space-between;
+                padding: 8px 0;
+                border-bottom: 1px solid var(--ctp-latte-overlay0);
+            }
+            .metric-item:last-child {
+                border-bottom: none;
+            }
+            .metric-label {
+                flex: 1;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                margin-right: 10px;
+                font-family: monospace;
+                font-size: 13px;
+            }
+            .metric-value {
+                font-weight: bold;
+                color: var(--ctp-latte-blue);
+                min-width: 60px;
+                text-align: right;
+            }
+            .access-logs {
+                margin-top: 20px;
+            }
+            .log-table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 12px;
+                font-family: monospace;
+            }
+            .log-table th,
+            .log-table td {
+                padding: 8px;
+                text-align: left;
+                border-bottom: 1px solid var(--ctp-latte-overlay0);
+            }
+            .log-table th {
+                background-color: var(--ctp-latte-crust);
+                font-weight: bold;
+                position: sticky;
+                top: 0;
+            }
+            .log-table tbody {
+                max-height: 400px;
+                overflow-y: auto;
+            }
+            .status-200 {
+                color: var(--ctp-latte-green);
+            }
+            .status-300 {
+                color: var(--ctp-latte-yellow);
+            }
+            .status-400 {
+                color: var(--ctp-latte-maroon);
+            }
+            .status-500 {
+                color: var(--ctp-latte-lavender);
+            }
+            .loading {
+                text-align: center;
+                padding: 40px;
+                color: var(--ctp-latte-subtext0);
+            }
+            .error {
+                text-align: center;
+                padding: 40px;
+                color: var(--ctp-latte-red);
+                background: #fdf2f2;
+                margin: 20px 0;
+            }
+            .log-container {
+                max-height: 500px;
+                overflow-y: auto;
+                border: 1px solid var(--ctp-latte-overlay0);
+            }
+            @media (max-width: 768px) {
+                .analytics-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <a href="/dashboard" class="back-link">← Back to Dashboard</a>
+                <h1>IP Analytics: <code>{{.IP}}</code></h1>
+            </div>
+
+            <div class="controls">
+                <label for="timePeriod">Time Period:</label>
+                <select id="timePeriod">
+                    <option value="1h">Last Hour</option>
+                    <option value="24h" selected>Last 24 Hours</option>
+                    <option value="7d">Last 7 Days</option>
+                    <option value="30d">Last 30 Days</option>
+                </select>
+                <button onclick="refreshAnalytics()">Refresh</button>
+            </div>
+
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-box">
+                    <div class="stat-number" id="totalRequests">-</div>
+                    <div class="stat-label">Total Requests</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number" id="uniqueRoutes">-</div>
+                    <div class="stat-label">Unique Routes</div>
+                </div>
+                <div class="stat-box error-stat">
+                    <div class="stat-number" id="errorCount">-</div>
+                    <div class="stat-label">Errors (4xx/5xx)</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number" id="avgResponseTime">-</div>
+                    <div class="stat-label">Avg Response (ms)</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number" id="firstSeen">-</div>
+                    <div class="stat-label">First Seen</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number" id="lastSeen">-</div>
+                    <div class="stat-label">Last Seen</div>
+                </div>
+            </div>
+
+            <div class="analytics-grid">
+                <div class="card">
+                    <h2>📊 Most Requested Routes</h2>
+                    <div id="topRoutes" class="metric-list">
+                        <div class="loading">Loading...</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>⚠️ Status Codes</h2>
+                    <div id="statusCodes" class="metric-list">
+                        <div class="loading">Loading...</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>🕒 Hourly Activity</h2>
+                    <div id="hourlyActivity" class="metric-list">
+                        <div class="loading">Loading...</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>🌐 User Agents</h2>
+                    <div id="userAgents" class="metric-list">
+                        <div class="loading">Loading...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card full-width access-logs">
+                <h2>📋 Recent Access Logs (Last 100)</h2>
+                <div class="log-container">
+                    <table class="log-table" id="accessLogsTable">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Method</th>
+                                <th>URL</th>
+                                <th>Status</th>
+                                <th>Response Time</th>
+                                <th>Request Size</th>
+                                <th>Response Size</th>
+                                <th>User Agent</th>
+                            </tr>
+                        </thead>
+                        <tbody id="accessLogsBody">
+                            <tr>
+                                <td colspan="8" class="loading">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            const IP = "{{.IP}}";
+
+            async function fetchIPAnalytics() {
+                const timePeriod = document.getElementById("timePeriod").value;
+
+                try {
+                    const response = await fetch(
+                        `/api/dashboard/ip/${encodeURIComponent(IP)}?period=${timePeriod}`,
+                    );
+                    if (!response.ok) {
+                        throw new Error(
+                            `HTTP error! status: ${response.status}`,
+                        );
+                    }
+                    const data = await response.json();
+                    updateAnalytics(data);
+                } catch (error) {
+                    console.error("Error fetching IP analytics:", error);
+                    showError("Failed to load analytics data. Please try again.");
+                }
+            }
+
+            function updateAnalytics(data) {
+                document.getElementById("totalRequests").textContent =
+                    data.stats.totalRequests.toLocaleString();
+                document.getElementById("uniqueRoutes").textContent =
+                    data.stats.uniqueRoutes.toLocaleString();
+                document.getElementById("errorCount").textContent =
+                    data.stats.errorCount.toLocaleString();
+                document.getElementById("avgResponseTime").textContent =
+                    Math.round(data.stats.avgResponseTime);
+                document.getElementById("firstSeen").textContent =
+                    formatDateTime(data.stats.firstSeen);
+                document.getElementById("lastSeen").textContent =
+                    formatDateTime(data.stats.lastSeen);
+
+                updateMetricList("topRoutes", data.topRoutes, (item) => ({
+                    label: item.url,
+                    value: item.count.toLocaleString(),
+                }));
+
+                updateMetricList("statusCodes", data.statusCodes, (item) => ({
+                    label: `${item.status_code} - ${getStatusText(item.status_code)}`,
+                    value: item.count.toLocaleString(),
+                }));
+
+                updateMetricList("hourlyActivity", data.hourlyActivity, (item) => ({
+                    label: `${item.hour}:00`,
+                    value: item.count.toLocaleString(),
+                }));
+
+                updateMetricList("userAgents", data.userAgents, (item) => ({
+                    label: item.user_agent || "Unknown",
+                    value: item.count.toLocaleString(),
+                }));
+
+                updateAccessLogs(data.accessLogs);
+            }
+
+            function updateMetricList(elementId, data, formatter) {
+                const element = document.getElementById(elementId);
+                if (!data || data.length === 0) {
+                    element.innerHTML =
+                        '<div class="loading">No data available</div>';
+                    return;
+                }
+
+                const html = data
+                    .map((item) => {
+                        const formatted = formatter(item);
+                        return `
+                        <div class="metric-item">
+                            <div class="metric-label" title="${formatted.label}">${formatted.label}</div>
+                            <div class="metric-value">${formatted.value}</div>
+                        </div>
+                    `;
+                    })
+                    .join("");
+
+                element.innerHTML = html;
+            }
+
+            function updateAccessLogs(logs) {
+                const tbody = document.getElementById("accessLogsBody");
+                if (!logs || logs.length === 0) {
+                    tbody.innerHTML =
+                        '<tr><td colspan="8" class="loading">No logs available</td></tr>';
+                    return;
+                }
+
+                const html = logs
+                    .map((log) => {
+                        const statusClass = getStatusClass(log.status_code);
+                        return `
+                        <tr>
+                            <td>${formatDateTime(log.timestamp)}</td>
+                            <td>${log.method || "-"}</td>
+                            <td title="${log.url}">${truncate(log.url, 40)}</td>
+                            <td class="${statusClass}">${log.status_code || "-"}</td>
+                            <td>${log.response_time || "-"}ms</td>
+                            <td>${formatBytes(log.request_size)}</td>
+                            <td>${formatBytes(log.response_size)}</td>
+                            <td title="${log.user_agent}">${truncate(log.user_agent, 30)}</td>
+                        </tr>
+                    `;
+                    })
+                    .join("");
+
+                tbody.innerHTML = html;
+            }
+
+            function getStatusClass(statusCode) {
+                if (statusCode >= 200 && statusCode < 300) return "status-200";
+                if (statusCode >= 300 && statusCode < 400) return "status-300";
+                if (statusCode >= 400 && statusCode < 500) return "status-400";
+                if (statusCode >= 500) return "status-500";
+                return "";
+            }
+
+            function getStatusText(statusCode) {
+                const statusTexts = {
+                    200: "OK",
+                    301: "Moved Permanently",
+                    302: "Found",
+                    304: "Not Modified",
+                    400: "Bad Request",
+                    401: "Unauthorized",
+                    403: "Forbidden",
+                    404: "Not Found",
+                    405: "Method Not Allowed",
+                    429: "Too Many Requests",
+                    500: "Internal Server Error",
+                    502: "Bad Gateway",
+                    503: "Service Unavailable",
+                };
+                return statusTexts[statusCode] || "Unknown";
+            }
+
+            function formatDateTime(dateString) {
+                if (!dateString) return "-";
+                const date = new Date(dateString);
+                return date.toLocaleString();
+            }
+
+            function formatBytes(bytes) {
+                if (!bytes || bytes === 0) return "-";
+                const sizes = ["B", "KB", "MB", "GB"];
+                const i = Math.floor(Math.log(bytes) / Math.log(1024));
+                return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + sizes[i];
+            }
+
+            function truncate(str, maxLength) {
+                if (!str) return "-";
+                if (str.length <= maxLength) return str;
+                return str.substring(0, maxLength) + "...";
+            }
+
+            function showError(message) {
+                const elements = [
+                    "topRoutes",
+                    "statusCodes",
+                    "hourlyActivity",
+                    "userAgents",
+                ];
+                elements.forEach((id) => {
+                    document.getElementById(id).innerHTML =
+                        `<div class="error">${message}</div>`;
+                });
+
+                document.getElementById("accessLogsBody").innerHTML =
+                    `<tr><td colspan="8" class="error">${message}</td></tr>`;
+
+                [
+                    "totalRequests",
+                    "uniqueRoutes",
+                    "errorCount",
+                    "avgResponseTime",
+                    "firstSeen",
+                    "lastSeen",
+                ].forEach((id) => {
+                    document.getElementById(id).textContent = "-";
+                });
+            }
+
+            function refreshAnalytics() {
+                const elements = [
+                    "topRoutes",
+                    "statusCodes",
+                    "hourlyActivity",
+                    "userAgents",
+                ];
+                elements.forEach((id) => {
+                    document.getElementById(id).innerHTML =
+                        '<div class="loading">Loading...</div>';
+                });
+
+                document.getElementById("accessLogsBody").innerHTML =
+                    '<tr><td colspan="8" class="loading">Loading...</td></tr>';
+
+                [
+                    "totalRequests",
+                    "uniqueRoutes",
+                    "errorCount",
+                    "avgResponseTime",
+                    "firstSeen",
+                    "lastSeen",
+                ].forEach((id) => {
+                    document.getElementById(id).textContent = "-";
+                });
+
+                fetchIPAnalytics();
+            }
+
+            document.addEventListener("DOMContentLoaded", fetchIPAnalytics);
+        </script>
+    </body>
+</html>

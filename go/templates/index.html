@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+    <!doctype html>
+    <html lang="en">
+        <head>
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <link rel="icon" type="image/png" href="/favicon.ico/favicon-96x96.png" sizes="96x96" />
+            <link rel="icon" type="image/svg+xml" href="/favicon.ico/favicon.svg" />
+            <link rel="shortcut icon" href="/favicon.ico/favicon.ico" />
+            <link rel="apple-touch-icon" sizes="180x180" href="/favicon.ico/apple-touch-icon.png" />
+            <meta name="apple-mobile-web-app-title" content="CNQSO" />
+            <link rel="manifest" href="/favicon.ico/site.webmanifest" />
+            <title>cnqso.com</title>
+            <title>Home</title>
+            <link rel="stylesheet" type="text/css" href="static/css/oldsite.css" />
+        </head>
+        <body>
+            <canvas id="lamp-anim" class="lamp-anim" width="1500px" height="700px">
+
+            </canvas>
+
+            <hr class="two" />
+            <nav>
+                <div class="navlink">
+                    <a href="https://github.com/cnqso">GitHub</a>
+                </div>
+                <div class="navlink">
+                    <a href="https://conkaeso.neocities.org/OpenDirectory">ODir</a>
+                </div>
+
+                <div class="navlink">
+                    <a href="/blog">Blog</a>
+                </div>
+                <div class="navlink">
+                    <a href="/200">Error</a>
+                </div>
+            </nav>
+            <hr class="two" />
+            <main>
+                <div class="rightBar"></div>
+                <div class="center">
+                    <h1>cnqso.com</h1>
+
+                    <hr />
+
+                    <div>
+                        <p>Go net/http server</p>
+                        <p>Ooh it compiles so fast</p>
+                    </div>
+
+                    <div>
+                        {{range .Routes}}
+                        <div>
+                            <a href="{{.}}">{{.}}</a>
+                        </div>
+                        {{end}}
+                    </div>
+                    <hr />
+                    <div>This list was generated at runtime</div>
+                </div>
+                <div class="leftBar"></div>
+
+            </main>
+
+            <script type="module" src="static/js/lavaLamp.js"></script>
+        </body>
+    </html>
+</html>

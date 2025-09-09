@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link
+            rel="icon"
+            type="image/png"
+            href="/favicon.ico/favicon-96x96.png"
+            sizes="96x96"
+        />
+        <link rel="icon" type="image/svg+xml" href="/favicon.ico/favicon.svg" />
+        <link rel="shortcut icon" href="/favicon.ico/favicon.ico" />
+        <link
+            rel="apple-touch-icon"
+            sizes="180x180"
+            href="/favicon.ico/apple-touch-icon.png"
+        />
+        <meta name="apple-mobile-web-app-title" content="CNQSO" />
+        <link rel="manifest" href="/favicon.ico/site.webmanifest" />
+        <title>
+            {{if .ThreadTitle}}{{.ThreadTitle}} - {{end}}Thread {{.ThreadID}} -
+            Petrarchive
+        </title>
+        <link rel="stylesheet" href="/static/css/petrarchan.css" />
+    </head>
+    <body>
+        <div class="header">
+            <h1>
+                Petrarchive &ndash; {{if .ThreadTitle}} {{.ThreadTitle}}
+                {{else}} Thread {{.ThreadID}} {{end}}
+            </h1>
+
+            <a href="/petrarchive/">back</a>
+        </div>
+
+        <div class="thread-container">
+            {{if .Posts}} {{range $index, $post := .Posts}}
+            <div class="post {{if .IsOP}}op{{end}}" id="post-{{.ID}}">
+                <div class="post-header">
+                    <span class="post-id">No.{{.ID}}</span>
+                    <span class="post-poster">{{.Poster}}</span>{{getBacklinks
+                    .ID $.ThreadID}}
+                    <span class="post-date"
+                        >{{.EST.Format "2006-01-02 15:04:05"}}</span
+                    >
+                    {{if and .IsOP .Title}}
+                    <div class="post-title">{{.Title}}</div>
+                    {{end}}
+                </div>
+
+                <div class="post-content clearfix">
+                    {{if .ImageURL}}
+                    <a href="{{.ImageURL}}" target="_blank">
+                        <img
+                            src="{{.ImageURL | thumbnailURL}}"
+                            alt="Post image"
+                            class="post-image"
+                        />
+                    </a>
+                    {{end}}
+
+                    <div class="post-text">
+                        {{processContent .Contents $.ThreadID}}
+                    </div>
+                </div>
+            </div>
+            {{end}} {{else}}
+            <div class="no-posts">Thread not found or empty</div>
+            {{end}}
+        </div>
+    </body>
+</html>

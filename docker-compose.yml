@@ -1,0 +1,31 @@
+services:
+  web:
+    build:
+      context: ./go
+      dockerfile: Dockerfile
+    container_name: cnqso-web-server
+    ports:
+      - "1738:1738"
+
+    deploy:
+      resources:
+        limits:
+          memory: 16G
+          cpus: "16.0"
+        reservations:
+          memory: 16G
+          cpus: "16.0"
+
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:1738/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    volumes:
+      - ./webm:/app/uploads
+      - ./go/db:/app/db
+
+    tmpfs:
+      - /tmp
