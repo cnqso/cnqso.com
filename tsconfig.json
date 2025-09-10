@@ -1,13 +1,21 @@
 {
     "compilerOptions": {
         "target": "ES2017",
-        "module": "ES6",
+        "module": "esnext",
         "moduleResolution": "node",
         "outDir": "./go/static/js",
-
         "rootDir": "./ts",
-        "lib": ["DOM", "ES2017"]
+        "lib": [
+            "DOM",
+            "ES2017"
+        ]
     },
-    "include": ["./**/*"],
-    "exclude": ["node_modules", "js/**/*"]
+    "include": [
+        "ts/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "js/**/*",
+        "submodules/**/*"
+    ]
 }

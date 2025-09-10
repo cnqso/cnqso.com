@@ -68,6 +68,8 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		"/hexagons",
 		"/splits",
 		"/petrarchive/",
+		"/spirals",
+		"/reverse-wordle-solver",
 	}
 	ServeTemplate(w, r, "index.html", struct {
 		Routes []string
@@ -111,15 +113,27 @@ func SplitsHandler(w http.ResponseWriter, r *http.Request) {
 	ServeTemplate(w, r, "splits.html", nil)
 }
 
+func ReverseWordleHandler(w http.ResponseWriter, r *http.Request) {
+	ServeTemplate(w, r, "reversewordle.html", nil)
+}
+
 func StaticHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "public, max-age=86400")
 	filePath := r.URL.Path[len("/static/"):]
 
-	if filepath.Ext(filePath) == "" && !strings.HasPrefix(filePath, "petrarchive/") {
+	if filepath.Ext(filePath) == "" && !strings.HasPrefix(filePath, "petrarchive/") && !strings.HasPrefix(filePath, "react/") {
 		FourHundredHandler(w, r, 403)
 		return
 	}
 	http.ServeFile(w, r, "static/"+filePath)
+}
+
+func SpiralsHandler(w http.ResponseWriter, r *http.Request) {
+	// w.Header().Set("Cache-Control", "public, max-age=86400")
+	fmt.Println(r.URL.Path)
+	filePath := "static/react/spirals" + r.URL.Path[len("/spirals"):]
+	fmt.Println(filePath)
+	http.ServeFile(w, r, filePath)
 }
 
 type ArchivePost struct {

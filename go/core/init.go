@@ -199,6 +199,8 @@ func compileTypeScript() {
 			"error":  err.Error(),
 			"output": string(output),
 		})
+		fmt.Println(err.Error())
+		fmt.Println(string(output))
 		return
 	}
 

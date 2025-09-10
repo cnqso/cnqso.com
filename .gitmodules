@@ -1,0 +1,3 @@
+[submodule "submodules/spirals"]
+path = submodules/spirals
+	url = https://github.com/cnqso/spirals

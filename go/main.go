@@ -16,6 +16,9 @@ var routes = []types.Route{
 	{Path: "/fetch", Handler: api.FetchHandler},
 	{Path: "/blog", Handler: api.BlogHandler},
 	{Path: "/splits", Handler: api.SplitsHandler},
+	{Path: "/spirals/", Handler: api.SpiralsHandler},
+	{Path: "/reverse-wordle-solver", Handler: api.ReverseWordleHandler},
+
 	{Path: "/dashboard", Handler: api.DashboardPageHandler},
 	{Path: "/api/dashboard", Handler: api.DashboardHandler},
 	{Path: "/dashboard/ip/", Handler: api.IPAnalyticsPageHandler},
