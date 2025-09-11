@@ -1,3 +1,6 @@
 [submodule "submodules/spirals"]
 	path = submodules/spirals
 	url = https://github.com/cnqso/spirals
+[submodule "submodules/sokodle"]
+	path = submodules/sokodle
+	url = https://github.com/cnqso/sokodle
