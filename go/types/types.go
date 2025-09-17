@@ -1,6 +1,10 @@
 package types
 
-import "net/http"
+import (
+	"html/template"
+	"net/http"
+	"time"
+)
 
 type JSONResponse struct {
 	Success bool   `json:"success"`
@@ -10,4 +14,16 @@ type JSONResponse struct {
 type Route struct {
 	Path    string
 	Handler http.HandlerFunc
+}
+
+type BlogPost struct {
+	Slug     string
+	Title    string
+	Date     time.Time
+	Content  template.HTML
+	FilePath string
+}
+
+type BlogData struct {
+	Posts []BlogPost
 }

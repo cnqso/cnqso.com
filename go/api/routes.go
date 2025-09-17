@@ -98,19 +98,16 @@ func FourHundredHandler(w http.ResponseWriter, r *http.Request, statusCode int) 
 	return err
 }
 
-func BlogHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path == "/blog" {
-		ServeTemplate(w, r, "blog.html", nil)
-		return
-	}
-}
-
 func HexagonsHandler(w http.ResponseWriter, r *http.Request) {
 	ServeTemplate(w, r, "hexagons.html", nil)
 }
 
 func SplitsHandler(w http.ResponseWriter, r *http.Request) {
 	ServeTemplate(w, r, "splits.html", nil)
+}
+
+func L8Handler(w http.ResponseWriter, r *http.Request) {
+	ServeTemplate(w, r, "l8.html", nil)
 }
 
 func ReverseWordleHandler(w http.ResponseWriter, r *http.Request) {

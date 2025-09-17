@@ -14,7 +14,7 @@ var routes = []types.Route{
 	{Path: "/health", Handler: api.HealthHandler},
 	{Path: "/upload", Handler: api.UploadHandler},
 	{Path: "/fetch", Handler: api.FetchHandler},
-	{Path: "/blog", Handler: api.BlogHandler},
+	{Path: "/blog/", Handler: api.BlogHandler},
 	{Path: "/splits", Handler: api.SplitsHandler},
 	{Path: "/spirals/", Handler: api.SpiralsHandler},
 	{Path: "/reverse-wordle-solver", Handler: api.ReverseWordleHandler},
@@ -26,7 +26,7 @@ var routes = []types.Route{
 	{Path: "/static/", Handler: api.StaticHandler},
 	{Path: "/petrarchive/", Handler: api.ArchiveHandler},
 	{Path: "/hexagons", Handler: api.HexagonsHandler},
-
+	{Path: "/l8", Handler: api.L8Handler},
 	{Path: "/favicon.ico/", Handler: api.FaviconHandler},
 	{Path: "/robots.txt", Handler: api.RobotsHandler},
 	// {Path: "/sitemap.xml", Handler: api.SitemapHandler},

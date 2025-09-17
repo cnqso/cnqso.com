@@ -61,6 +61,8 @@ h2 {
     font-size: 32px;
     opacity: 2;
     transition: opacity 1200ms ease;
+    padding: 0;
+    margin: 0;
 }
 
 h3,
@@ -92,10 +94,6 @@ nav {
     opacity: 2
 }
 
-
-
-
-
 .navlink {
     height: 100%;
     width: 20%;
@@ -117,9 +115,9 @@ main {
 
 .leftBar,
 .rightBar {
-    flex: 0 2 11ch;
+    flex: 0 2 8ch;
     min-width: 5ch;
-    max-width: 11ch;
+    max-width: 8ch;
     max-height: 100%;
     overflow: hidden;
     display: flex;
@@ -135,6 +133,11 @@ main {
     overflow: hidden;
     text-overflow: ellipsis;
 
+}
+
+.upside-down {
+    transform: rotate(180deg);
+    display: inline-block;
 }
 
 /*
