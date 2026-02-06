@@ -14,7 +14,7 @@ RUN go build -o server .
 
 FROM alpine:latest
 
-RUN apk --no-cache add ca-certificates curl sqlite
+RUN apk --no-cache add ca-certificates curl sqlite tzdata nodejs npm
 
 RUN addgroup -g 1000 -S appgroup && \
     adduser -u 1000 -S appuser -G appgroup

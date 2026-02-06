@@ -2,6 +2,8 @@ package db
 
 import (
 	"database/sql"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var DB *sql.DB
@@ -44,12 +46,23 @@ func InitDatabase() error {
 			thread INTEGER,
 			replies INTEGER DEFAULT 0,
 			image_path TEXT
-
 		);
 		CREATE TABLE IF NOT EXISTS wordle (
 			id INTEGER PRIMARY KEY,
-			date DATETIME
+			date DATETIME,
 			word CHAR(5)
+		);
+		CREATE TABLE IF NOT EXISTS ebwg_users (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			name TEXT NOT NULL,
+			pin TEXT NOT NULL
+		);
+		CREATE TABLE IF NOT EXISTS ebwg_games (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			title TEXT NOT NULL,
+			cover_url TEXT,
+			user_id INTEGER NOT NULL,
+			FOREIGN KEY (user_id) REFERENCES ebwg_users(id)
 		);
 	`)
 

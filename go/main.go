@@ -27,6 +27,8 @@ var routes = []types.Route{
 	{Path: "/petrarchive/", Handler: api.ArchiveHandler},
 	{Path: "/hexagons", Handler: api.HexagonsHandler},
 	{Path: "/l8", Handler: api.L8Handler},
+	{Path: "/ebwg/", Handler: api.EBWGHandler},
+	{Path: "/api/ebwg/", Handler: api.EBWGAPIHandler},
 	{Path: "/favicon.ico/", Handler: api.FaviconHandler},
 	{Path: "/robots.txt", Handler: api.RobotsHandler},
 	// {Path: "/sitemap.xml", Handler: api.SitemapHandler},
