@@ -1,0 +1,97 @@
+:root {
+    --green: #00ff00;
+    --purple: #cc00ff;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: var(--purple);
+    color: var(--green);
+    font-family: "Coral Pixels", monospace;
+    -webkit-font-smoothing: none;
+}
+
+/* Hide the real cursor; a comically large fake one follows the mouse. */
+html,
+body,
+.row {
+    cursor: none;
+}
+
+#cursor {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 180px; /* 5x the 36px source — integer scale keeps pixels uniform */
+    height: 180px;
+    z-index: 9999;
+    pointer-events: none;
+    background-size: contain;
+    background-repeat: no-repeat;
+    image-rendering: pixelated; /* keep the Win98 pixels crisp when scaled up */
+    will-change: transform;
+    /* recolored cargo.site Win98 pointing finger (only shown while in-window) */
+    background-image: url("../cursors/left_green.png");
+}
+
+/* The page is the list. A column of rows filling the full height. */
+.stack {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* Each row is a full-width link whose characters spread edge-to-edge. */
+.row {
+    flex: 1 1 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-align: center;
+    line-height: 1;
+    text-decoration: none;
+    color: var(--green);
+    background: var(--purple);
+    white-space: nowrap;
+}
+
+/* Each character is its own flex item; space-between pins first/last to edges. */
+.ch {
+    display: block;
+    line-height: 1;
+}
+
+/* Pin the page's first glyph to the top-left and last glyph to bottom-right. */
+.stack .row:first-child {
+    align-items: flex-start;
+}
+.stack .row:last-child {
+    align-items: flex-end;
+}
+
+/* Coral Pixels is a color font, so we can only paint the background.
+   Exactly one row is "active" (green) at a time. Default: the title.
+   Hovering any row moves the green to it; the title goes purple. */
+.title {
+    background: var(--green);
+}
+.stack:hover .title:not(:hover) {
+    background: var(--purple);
+}
+.row:hover {
+    background: var(--green);
+}

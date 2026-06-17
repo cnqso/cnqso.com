@@ -1,70 +1,104 @@
 <!doctype html>
-<html>
-    <!doctype html>
-    <html lang="en">
-        <head>
-            <meta charset="UTF-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            <link rel="icon" type="image/png" href="/favicon.ico/favicon-96x96.png" sizes="96x96" />
-            <link rel="icon" type="image/svg+xml" href="/favicon.ico/favicon.svg" />
-            <link rel="shortcut icon" href="/favicon.ico/favicon.ico" />
-            <link rel="apple-touch-icon" sizes="180x180" href="/favicon.ico/apple-touch-icon.png" />
-            <meta name="apple-mobile-web-app-title" content="CNQSO" />
-            <link rel="manifest" href="/favicon.ico/site.webmanifest" />
-            <title>cnqso.com</title>
-            <link rel="stylesheet" type="text/css" href="static/css/oldsite.css" />
-        </head>
-        <body>
-            <canvas id="lamp-anim" class="lamp-anim" width="1500px" height="700px">
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="icon" type="image/png" href="/favicon.ico/favicon-96x96.png" sizes="96x96" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.ico/favicon.svg" />
+        <link rel="shortcut icon" href="/favicon.ico/favicon.ico" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/favicon.ico/apple-touch-icon.png" />
+        <meta name="apple-mobile-web-app-title" content="CNQSO" />
+        <link rel="manifest" href="/favicon.ico/site.webmanifest" />
+        <title>cnqso.com</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Coral+Pixels&display=swap" />
+        <link rel="stylesheet" type="text/css" href="static/css/brut.css" />
+    </head>
+    <body>
+        <main class="stack" id="stack">
+            <a class="row title" href="/" data-text="CNQSO.COM"></a>
+            <a class="row" href="https://sokodle.cnqso.com" data-text="SOKODLE"></a>
+            {{range .Routes}}
+            <a class="row" href="{{.}}" data-text="{{.}}"></a>
+            {{end}}
+            <a class="row" href="https://github.com/cnqso" data-text="GITHUB"></a>
+            <a class="row" href="https://conkaeso.neocities.org/OpenDirectory" data-text="ODIR"></a>
+            <a class="row" href="/blog" data-text="BLOG"></a>
+        </main>
 
-            </canvas>
+        <div id="cursor"></div>
 
-            <hr class="two" />
-            <nav><div class="navlink">
-                <h1>CNQSO<span class="upside-down">˙</span>com</h1></div>
-                <div class="navlink">
-                    <a href="https://github.com/cnqso">GitHub</a>
-                </div>
-                <div class="navlink">
-                    <a href="https://conkaeso.neocities.org/OpenDirectory">ODir</a>
-                </div>
+        <script>
+            // Split each row into per-character flex items so the first and last
+            // glyph pin to the left/right edges, and size the type to the row's
+            // own height so the top line touches the top and the bottom the bottom.
+            (function () {
+                var rows = Array.prototype.slice.call(document.querySelectorAll(".row"));
 
-                <div class="navlink">
-                    <a href="/blog">Blog</a>
-                </div>
-            </nav>
-            <hr class="two" />
-            <main>
-                <div class="rightBar"></div>
-                <div class="center">
+                rows.forEach(function (row, i) {
+                    // Stack earlier rows above later ones so a descender bleeding
+                    // downward paints over the next row's background instead of
+                    // being hidden behind it.
+                    row.style.zIndex = rows.length - i;
 
+                    var text = row.getAttribute("data-text");
+                    row.textContent = "";
+                    text.split("").forEach(function (c) {
+                        var span = document.createElement("span");
+                        span.className = "ch";
+                        // keep slashes etc. visible; spaces still occupy a cell
+                        span.textContent = c === " " ? " " : c;
+                        row.appendChild(span);
+                    });
+                });
 
-                    <hr />
+                function fit() {
+                    rows.forEach(function (row) {
+                        // Fill the full row height; descenders are free to bleed into
+                        // the next row's space (overflow is visible) instead of clipping.
+                        var size = row.clientHeight;
+                        row.style.fontSize = size + "px";
+                        // Sum the intrinsic glyph widths; if they overflow the row,
+                        // scale down so the first/last char still pin to the edges.
+                        var chars = row.children;
+                        var sum = 0;
+                        for (var i = 0; i < chars.length; i++) sum += chars[i].offsetWidth;
+                        if (sum > row.clientWidth && sum > 0) {
+                            row.style.fontSize = size * (row.clientWidth / sum) + "px";
+                        }
+                    });
+                }
 
-                    <div>
-                        <p>Go net/http server</p>
-                        <p>Ooh it compiles so fast</p>
-                    </div>
+                fit();
+                window.addEventListener("resize", fit);
+                if (document.fonts && document.fonts.ready) {
+                    document.fonts.ready.then(fit);
+                }
 
-                    <div>
-                        <div>
-                            <a href="https://sokodle.cnqso.com">Sokodle</a>
-                        </div>
-                        {{range .Routes}}
-                        <div>
-                            <a href="{{.}}">{{.}}</a>
-                        </div>
-                        {{end}}
+                // Comically large Win98 pointing finger that tracks the pointer.
+                // Always the left-hand finger while in-window; hotspot = tip at (0, 0.33).
+                var cursor = document.getElementById("cursor");
+                var SIZE = 180;
+                var TIP_X = 0;
+                var TIP_Y = 0.33;
 
-                    </div>
-                    <hr />
-                    <div>This list was generated at runtime</div>
-                </div>
-                <div class="leftBar"></div>
+                cursor.style.display = "none";
 
-            </main>
+                document.addEventListener("mousemove", function (e) {
+                    cursor.style.display = "block";
+                    cursor.style.transform =
+                        "translate(" + (e.clientX - TIP_X * SIZE) + "px," + (e.clientY - TIP_Y * SIZE) + "px)";
+                });
 
-            <script type="module" src="static/js/lavaLamp.js"></script>
-        </body>
-    </html>
+                // Disappear entirely once the pointer leaves the window.
+                document.addEventListener("mouseleave", function () {
+                    cursor.style.display = "none";
+                });
+                document.addEventListener("mouseenter", function () {
+                    cursor.style.display = "block";
+                });
+            })();
+        </script>
+    </body>
 </html>
