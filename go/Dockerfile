@@ -1,4 +1,6 @@
-FROM golang:1.23-alpine AS builder
+# syntax=docker/dockerfile:1.7
+
+FROM golang:1.24-alpine AS builder
 
 RUN apk add --no-cache gcc musl-dev sqlite-dev
 
@@ -6,11 +8,13 @@ WORKDIR /app
 
 COPY go.mod go.sum ./
 
-RUN go mod download
+RUN --mount=type=cache,target=/go/pkg/mod go mod download
 
 COPY . ./
 
-RUN go build -o server .
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg/mod \
+    go build -o server .
 
 FROM alpine:latest
 
@@ -24,9 +28,7 @@ WORKDIR /app
 RUN mkdir -p /app/uploads && \
     chown -R appuser:appgroup /app
 
-COPY --from=builder /app .
-
-RUN chown -R appuser:appgroup .
+COPY --from=builder --chown=appuser:appgroup /app .
 
 USER appuser
 

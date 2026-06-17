@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"server/config"
 	"server/logs"
 	"server/middleware"
 	"strconv"
@@ -40,14 +41,7 @@ func FetchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var saveDir string
-	if _, err := os.Stat("/app/uploads"); err == nil {
-		saveDir = "/app/uploads"
-	} else {
-		saveDir = filepath.Join(os.Getenv("HOME"), "server", "webm")
-	}
-
-	filePath := filepath.Join(saveDir, filename)
+	filePath := filepath.Join(config.UploadDir, filename)
 
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		logs.HTTPError(w, r, nil, http.StatusNotFound, "File not found")

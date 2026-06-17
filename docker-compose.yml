@@ -5,16 +5,21 @@ services:
       dockerfile: Dockerfile
     container_name: cnqso-web-server
     ports:
-      - "1738:1738"
+      - "127.0.0.1:1739:1738"
+    environment:
+      - CNQSO_PORT=:1738
+      - CNQSO_UPLOAD_DIR=/app/uploads
+      - CNQSO_COMPILE_TYPESCRIPT=false
+    restart: unless-stopped
 
     deploy:
       resources:
         limits:
-          memory: 16G
-          cpus: "16.0"
+          memory: 1G
+          cpus: "2.0"
         reservations:
-          memory: 16G
-          cpus: "16.0"
+          memory: 128M
+          cpus: "0.25"
 
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:1738/health"]

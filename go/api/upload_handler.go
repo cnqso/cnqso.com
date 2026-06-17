@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"server/config"
 	"server/logs"
 	"server/middleware"
 	"strings"
@@ -42,12 +43,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var saveDir string
-	if _, err := os.Stat("/app/uploads"); err == nil {
-		saveDir = "/app/uploads"
-	} else {
-		saveDir = filepath.Join(os.Getenv("HOME"), "code", "server", "webm")
-	}
+	saveDir := config.UploadDir
 	err = os.MkdirAll(saveDir, 0755)
 	if err != nil {
 		logs.HTTPError(w, r, err, http.StatusInternalServerError, "Could not create directory")
