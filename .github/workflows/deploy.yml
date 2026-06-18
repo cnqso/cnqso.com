@@ -49,7 +49,7 @@ jobs:
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
 
-          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_SSH_KEY" | perl -pe 's/\\n/\n/g' > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
 
           port="${DEPLOY_PORT:-22}"
@@ -61,11 +61,7 @@ jobs:
         run: |
           set -Eeuo pipefail
           port="${DEPLOY_PORT:-22}"
-          deploy_path="${DEPLOY_PATH:-/home/asendio/cnqso-web}"
-          quoted_path="$(printf '%q' "$deploy_path")"
-
           ssh -i ~/.ssh/deploy_key \
             -p "$port" \
             -o IdentitiesOnly=yes \
-            "$DEPLOY_USER@$DEPLOY_HOST" \
-            "cd $quoted_path && ./scripts/deploy.sh"
+            "$DEPLOY_USER@$DEPLOY_HOST"
