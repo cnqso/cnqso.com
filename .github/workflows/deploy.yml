@@ -52,6 +52,13 @@ jobs:
           printf '%s\n' "$DEPLOY_SSH_KEY" | perl -pe 's/\\n/\n/g' > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
 
+          expected_public_key="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDco5WFtt4KrrXDylFRNsugAleBwOKkWwTX4Ma3mlBGX"
+          actual_public_key="$(ssh-keygen -y -f ~/.ssh/deploy_key)"
+          if [ "$actual_public_key" != "$expected_public_key" ]; then
+            echo "::error::DEPLOY_SSH_KEY does not match the authorized cnqso deploy key on the server."
+            exit 1
+          fi
+
           port="${DEPLOY_PORT:-22}"
           ssh-keyscan -p "$port" "$DEPLOY_HOST" >> ~/.ssh/known_hosts
 
