@@ -57,12 +57,15 @@ jobs:
             echo "::error::DEPLOY_SSH_KEY is not a valid private SSH key. Use the full contents of /home/asendio/.ssh/cnqso_github_actions_deploy."
             exit 1
           fi
+          echo "Deploy key fingerprint:"
+          ssh-keygen -lf ~/.ssh/deploy_key
           if [ "$actual_public_key" != "$expected_public_key" ]; then
             echo "::error::DEPLOY_SSH_KEY does not match the authorized cnqso deploy key on the server."
             exit 1
           fi
 
           port="${DEPLOY_PORT:-22}"
+          echo "Scanning SSH host key for $DEPLOY_HOST:$port"
           ssh-keyscan -p "$port" "$DEPLOY_HOST" >> ~/.ssh/known_hosts
 
       - name: Deploy on server
