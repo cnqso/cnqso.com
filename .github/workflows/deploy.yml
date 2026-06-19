@@ -19,6 +19,7 @@ jobs:
       DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
       DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
       DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_SSH_KEY_B64: ${{ secrets.DEPLOY_SSH_KEY_B64 }}
       DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
 
     steps:
@@ -27,12 +28,16 @@ jobs:
         shell: bash
         run: |
           missing=0
-          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY; do
+          for name in DEPLOY_HOST DEPLOY_USER; do
             if [ -z "${!name}" ]; then
               echo "::notice::Missing GitHub Actions secret: $name"
               missing=1
             fi
           done
+          if [ -z "$DEPLOY_SSH_KEY" ] && [ -z "$DEPLOY_SSH_KEY_B64" ]; then
+            echo "::notice::Missing GitHub Actions secret: DEPLOY_SSH_KEY or DEPLOY_SSH_KEY_B64"
+            missing=1
+          fi
 
           if [ "$missing" -eq 0 ]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
@@ -49,7 +54,11 @@ jobs:
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
 
-          printf '%s\n' "$DEPLOY_SSH_KEY" | perl -pe 's/\\n/\n/g' > ~/.ssh/deploy_key
+          if [ -n "$DEPLOY_SSH_KEY_B64" ]; then
+            printf '%s' "$DEPLOY_SSH_KEY_B64" | base64 --decode > ~/.ssh/deploy_key
+          else
+            printf '%s\n' "$DEPLOY_SSH_KEY" | perl -pe 's/\\n/\n/g' > ~/.ssh/deploy_key
+          fi
           chmod 600 ~/.ssh/deploy_key
 
           expected_public_key="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDco5WFtt4KrrXDylFRNsugAleBwOKkWwTX4Ma3mlBGX"
