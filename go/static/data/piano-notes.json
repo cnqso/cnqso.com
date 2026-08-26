@@ -1,0 +1,15 @@
+[
+    { "id": "treble-c4", "clef": "treble", "pitch": "C4", "answer": "C" },
+    { "id": "treble-d4", "clef": "treble", "pitch": "D4", "answer": "D" },
+    { "id": "treble-e4", "clef": "treble", "pitch": "E4", "answer": "E" },
+    { "id": "treble-f4", "clef": "treble", "pitch": "F4", "answer": "F" },
+    { "id": "treble-g4", "clef": "treble", "pitch": "G4", "answer": "G" },
+    { "id": "bass-c4", "clef": "bass", "pitch": "C4", "answer": "C" },
+    { "id": "bass-b3", "clef": "bass", "pitch": "B3", "answer": "B" },
+    { "id": "bass-a3", "clef": "bass", "pitch": "A3", "answer": "A" },
+    { "id": "bass-g3", "clef": "bass", "pitch": "G3", "answer": "G" },
+    { "id": "bass-f3", "clef": "bass", "pitch": "F3", "answer": "F" },
+    { "id": "bass-e3", "clef": "bass", "pitch": "E3", "answer": "E" },
+    { "id": "bass-d3", "clef": "bass", "pitch": "D3", "answer": "D" },
+    { "id": "bass-c3", "clef": "bass", "pitch": "C3", "answer": "C" }
+]

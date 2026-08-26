@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="icon" type="image/png" href="/favicon.ico/favicon-96x96.png" sizes="96x96" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.ico/favicon.svg" />
+        <link rel="shortcut icon" href="/favicon.ico/favicon.ico" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/favicon.ico/apple-touch-icon.png" />
+        <meta name="apple-mobile-web-app-title" content="CNQSO" />
+        <link rel="manifest" href="/favicon.ico/site.webmanifest" />
+        <title>Piano Flashcards</title>
+        <link rel="stylesheet" href="/static/css/piano-flashcards.css" />
+        <script type="module" src="/static/js/piano-flashcards.js"></script>
+    </head>
+    <body>
+        <main class="flashcards" aria-label="Piano note flashcards">
+            <section class="scoreboard" aria-label="Score">
+                <div>
+                    <span class="score-label">Correct</span>
+                    <strong id="correct-count">0</strong>
+                </div>
+                <div>
+                    <span class="score-label">Streak</span>
+                    <strong id="streak-count">0</strong>
+                </div>
+            </section>
+
+            <section class="staff-panel">
+                <canvas id="staff-canvas" width="900" height="360" aria-label="Sheet music note"></canvas>
+            </section>
+
+            <section class="answer-panel" aria-label="Choose the note name">
+                <div id="answer-buttons" class="answer-buttons"></div>
+                <p id="feedback" class="feedback" aria-live="polite"></p>
+            </section>
+        </main>
+    </body>
+</html>

@@ -67,7 +67,6 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	routes := []string{
 		"/hexagons",
 		"/splits",
-		"/petrarchive/",
 		"/spirals",
 		"/reverse-wordle-solver",
 	}
@@ -112,6 +111,10 @@ func L8Handler(w http.ResponseWriter, r *http.Request) {
 
 func ReverseWordleHandler(w http.ResponseWriter, r *http.Request) {
 	ServeTemplate(w, r, "reversewordle.html", nil)
+}
+
+func PianoFlashcardsHandler(w http.ResponseWriter, r *http.Request) {
+	ServeTemplate(w, r, "piano_flashcards.html", nil)
 }
 
 func StaticHandler(w http.ResponseWriter, r *http.Request) {
