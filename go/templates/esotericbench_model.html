@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Model · EsotericBench</title>
+        <link rel="stylesheet" href="/static/css/bloonsbench.css?v=20260904-1" />
+    </head>
+    <body>
+        <header>
+            <nav aria-label="Primary">
+                <a href="/esotericbench/">EsotericBench</a>
+                <a href="/esotericbench/about">About</a>
+                <a href="https://github.com/cnqso/esotericbench">GitHub</a>
+            </nav>
+        </header>
+
+        <main>
+            <h1 id="model-name">Loading…</h1>
+            <p class="model-summary" id="model-summary"></p>
+            <p class="table-note">Question text withheld · points / maximum</p>
+
+            <div class="table-wrap">
+                <table class="question-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Question</th>
+                            <th scope="col">Average</th>
+                            <th scope="col">Best</th>
+                            <th scope="col">Worst</th>
+                        </tr>
+                    </thead>
+                    <tbody id="question-body">
+                        <tr><td colspan="4">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+
+        <script>
+            const REPOSITORY = "cnqso/esotericbench";
+            const BRANCH = "main";
+            const TREE_API = `https://api.github.com/repos/${REPOSITORY}/git/trees/${BRANCH}?recursive=1`;
+            const RAW_ROOT = `https://raw.githubusercontent.com/${REPOSITORY}/${BRANCH}/`;
+            const QUESTION_MAXIMUMS = {
+                "1A": 130,
+                "1B": 150,
+                "1C": 170,
+                "1D": 140,
+                "1E": 160,
+                "2A": 130,
+                "2B": 10,
+                "2C": 10,
+                "2D": 10,
+                "3A": 10,
+                "3B": 10,
+                "4A": 10,
+                "4B": 10,
+                "5A": 10,
+                "5B": 10,
+                "5C": 10,
+                "5D": 10,
+                "6": 10,
+            };
+
+            const INITIAL_RESULTS = [
+                {
+                    model: "openai/gpt-5.6-luna",
+                    label: "GPT-5.6 Luna",
+                    completed_repetitions: 5,
+                    average_score: 210,
+                    best_score: 224,
+                    worst_score: 174,
+                    maximum_score: 1000,
+                    questions: [
+                        ["1A", 67, 81, 51],
+                        ["1B", 12, 40, 0],
+                        ["1C", 68.4, 82, 52],
+                        ["1D", 0, 0, 0],
+                        ["1E", 2.6, 10, 0],
+                        ["2A", 30, 30, 30],
+                        ["2B", 0, 0, 0],
+                        ["2C", 0, 0, 0],
+                        ["2D", 0, 0, 0],
+                        ["3A", 8, 10, 0],
+                        ["3B", 0, 0, 0],
+                        ["4A", 0, 0, 0],
+                        ["4B", 0, 0, 0],
+                        ["5A", 0, 0, 0],
+                        ["5B", 10, 10, 10],
+                        ["5C", 10, 10, 10],
+                        ["5D", 2, 10, 0],
+                        ["6", 0, 0, 0],
+                    ],
+                },
+                {
+                    model: "z-ai/glm-5.3-flash",
+                    label: "Z.ai: GLM 5.3 Flash",
+                    completed_repetitions: 5,
+                    average_score: 127,
+                    best_score: 143,
+                    worst_score: 102,
+                    maximum_score: 1000,
+                    questions: [
+                        ["1A", 35, 50, 21],
+                        ["1B", 45.2, 62, 21],
+                        ["1C", 8.6, 12, 0],
+                        ["1D", 0, 0, 0],
+                        ["1E", 0.2, 1, 0],
+                        ["2A", 14, 30, 0],
+                        ["2B", 0, 0, 0],
+                        ["2C", 0, 0, 0],
+                        ["2D", 0, 0, 0],
+                        ["3A", 2, 10, 0],
+                        ["3B", 0, 0, 0],
+                        ["4A", 0, 0, 0],
+                        ["4B", 0, 0, 0],
+                        ["5A", 0, 0, 0],
+                        ["5B", 10, 10, 10],
+                        ["5C", 10, 10, 10],
+                        ["5D", 2, 10, 0],
+                        ["6", 0, 0, 0],
+                    ],
+                },
+            ];
+
+            function modelSlug(model) {
+                return model
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, "-")
+                    .replace(/^-|-$/g, "");
+            }
+
+            function summarizeModel(model) {
+                const questions = (model.sections || []).flatMap((section) =>
+                    (section.questions || []).map((question) => [
+                        question.question_id,
+                        question.average_score,
+                        question.best_score,
+                        Math.min(...question.run_scores),
+                        question.maximum_score,
+                    ]),
+                );
+                const runScores = (model.runs || []).map((run) => run.score);
+                return {
+                    ...model,
+                    worst_score: runScores.length ? Math.min(...runScores) : model.average_score,
+                    questions,
+                };
+            }
+
+            async function loadResults() {
+                const treeResponse = await fetch(TREE_API, {
+                    headers: { Accept: "application/vnd.github+json" },
+                });
+                if (!treeResponse.ok) throw new Error(`GitHub returned ${treeResponse.status}`);
+
+                const tree = await treeResponse.json();
+                const scorecardPaths = tree.tree
+                    .filter(
+                        (entry) =>
+                            entry.type === "blob" &&
+                            entry.path.startsWith("results/") &&
+                            /\.json$/.test(entry.path),
+                    )
+                    .map((entry) => entry.path);
+                if (!scorecardPaths.length) throw new Error("No public scorecards found");
+
+                const scorecards = await Promise.all(
+                    scorecardPaths.map(async (path) => {
+                        const response = await fetch(`${RAW_ROOT}${path}`);
+                        if (!response.ok) throw new Error(`Could not load ${path}`);
+                        return response.json();
+                    }),
+                );
+
+                const results = scorecards.flatMap((scorecard) =>
+                    String(scorecard.schema_version || "").startsWith("esotericbench-public-scorecard-")
+                        ? (scorecard.models || []).map((model) =>
+                              summarizeModel({ ...model, generated_at: scorecard.generated_at }),
+                          )
+                        : [],
+                );
+                if (!results.length) throw new Error("No valid public scorecards found");
+
+                const latestByModel = new Map();
+                for (const result of results) {
+                    const previous = latestByModel.get(result.model);
+                    if (!previous || String(result.generated_at || "") > String(previous.generated_at || "")) {
+                        latestByModel.set(result.model, result);
+                    }
+                }
+                return Array.from(latestByModel.values());
+            }
+
+            function renderModel(result) {
+                const label = result.label || result.model;
+                document.title = `${label} · EsotericBench`;
+                document.getElementById("model-name").textContent = label;
+                document.getElementById("model-summary").textContent =
+                    `${result.completed_repetitions} runs · ${result.average_score.toFixed(1)} / ${result.maximum_score.toLocaleString()} average · ${result.best_score} / ${result.maximum_score.toLocaleString()} best · ${result.worst_score} / ${result.maximum_score.toLocaleString()} worst`;
+
+                const body = document.getElementById("question-body");
+                body.replaceChildren();
+                let previousSection = null;
+                for (const [question, average, best, worst, suppliedMaximum] of result.questions) {
+                    const maximum = suppliedMaximum || QUESTION_MAXIMUMS[question];
+                    const section = question.charAt(0);
+                    const row = document.createElement("tr");
+                    if (previousSection !== null && section !== previousSection) {
+                        row.classList.add("section-start");
+                    }
+                    previousSection = section;
+
+                    const values = [
+                        question,
+                        `${Number(average).toFixed(1)} / ${maximum}`,
+                        `${best} / ${maximum}`,
+                        `${worst} / ${maximum}`,
+                    ];
+                    values.forEach((value, index) => {
+                        const cell = document.createElement("td");
+                        cell.textContent = value;
+                        if (index === 1) {
+                            const percentage = Math.max(0, Math.min(100, (average / maximum) * 100));
+                            cell.classList.add("score-cell");
+                            cell.style.setProperty("--score-pct", `${percentage}%`);
+                            cell.title = `${percentage.toFixed(1)}% of maximum`;
+                        }
+                        row.appendChild(cell);
+                    });
+                    body.appendChild(row);
+                }
+            }
+
+            window.addEventListener("DOMContentLoaded", () => {
+                const requestedSlug = location.pathname.split("/").filter(Boolean).at(-1);
+                loadResults()
+                    .catch(() => INITIAL_RESULTS)
+                    .then((results) => {
+                        const result = results.find((candidate) => modelSlug(candidate.model) === requestedSlug);
+                        if (!result) throw new Error("Model not found");
+                        renderModel(result);
+                    })
+                    .catch(() => {
+                        document.getElementById("model-name").textContent = "Model not found";
+                        document.getElementById("model-summary").textContent = "";
+                        document.getElementById("question-body").innerHTML =
+                            '<tr><td colspan="4">No scorecard found.</td></tr>';
+                    });
+            });
+        </script>
+    </body>
+</html>

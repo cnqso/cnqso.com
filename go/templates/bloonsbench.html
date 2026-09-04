@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>BloonsBench</title>
+        <link rel="stylesheet" href="/static/css/bloonsbench.css?v=20260902-2" />
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" defer></script>
+    </head>
+    <body>
+        <header>
+            <nav aria-label="Primary">
+                <strong><a href="/bloonsbench/">BloonsBench</a></strong>
+                <a href="/bloonsbench/about">About</a>
+                <a href="https://github.com/cnqso/bloonsbench">GitHub</a>
+            </nav>
+        </header>
+
+        <main>
+            <h1>BloonsBench</h1>
+
+            <figure class="chart-panel">
+                <canvas id="results-chart" aria-label="Average round reached by model" role="img"></canvas>
+            </figure>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Model</th>
+                            <th scope="col">Runs</th>
+                            <th scope="col">Average</th>
+                            <th scope="col">Best</th>
+                            <th scope="col">Tokens / round</th>
+                            <th scope="col">Time</th>
+                            <th scope="col">Towers</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-body">
+                        <tr><td colspan="8">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+
+        <script>
+            const REPOSITORY = "cnqso/bloonsbench";
+            const BRANCH = "main";
+            const SUBMISSIONS_API = `https://api.github.com/repos/${REPOSITORY}/contents/results/submissions?ref=${BRANCH}`;
+
+            function average(values) {
+                return values.reduce((total, value) => total + value, 0) / values.length;
+            }
+
+            function summarizeRuns(runs) {
+                const grouped = new Map();
+
+                for (const run of runs) {
+                    if (!run.model || !Number.isFinite(run.round_reached)) continue;
+                    if (!grouped.has(run.model)) grouped.set(run.model, []);
+                    grouped.get(run.model).push(run);
+                }
+
+                return Array.from(grouped, ([model, modelRuns]) => {
+                    const best = modelRuns.reduce((winner, run) =>
+                        run.round_reached > winner.round_reached ||
+                        (run.round_reached === winner.round_reached && run.tokens_total < winner.tokens_total)
+                            ? run
+                            : winner,
+                    );
+
+                    return {
+                        model,
+                        runCount: modelRuns.length,
+                        averageRound: average(modelRuns.map((run) => run.round_reached)),
+                        bestRound: best.round_reached,
+                        bestSource: best.source_url,
+                        tokensPerRound:
+                            modelRuns.reduce((total, run) => total + run.tokens_total, 0) /
+                            modelRuns.reduce((total, run) => total + run.round_reached, 0),
+                        averageTime: average(modelRuns.map((run) => run.elapsed_s)),
+                        averageTowers: average(
+                            modelRuns.map((run) => (Array.isArray(run.towers) ? run.towers.length : 0)),
+                        ),
+                    };
+                }).sort(
+                    (a, b) =>
+                        b.averageRound - a.averageRound ||
+                        b.bestRound - a.bestRound ||
+                        a.tokensPerRound - b.tokensPerRound ||
+                        a.model.localeCompare(b.model),
+                );
+            }
+
+            function modelName(model) {
+                return model.includes("/") ? model.split("/").slice(1).join("/") : model;
+            }
+
+            function labColor(model) {
+                const name = model.toLowerCase();
+                const chineseLabs = [
+                    "qwen",
+                    "alibaba",
+                    "deepseek",
+                    "minimax",
+                    "moonshot",
+                    "kimi",
+                    "z-ai",
+                    "zhipu",
+                    "glm",
+                    "baidu",
+                    "tencent",
+                    "stepfun",
+                    "01-ai",
+                    "bytedance",
+                    "doubao",
+                ];
+
+                if (chineseLabs.some((lab) => name.includes(lab))) return "#d94848";
+                if (name.includes("google") || name.includes("gemini")) return "#4285f4";
+                if (name.includes("openai") || name.includes("gpt")) return "#10a37f";
+                if (name.includes("anthropic") || name.includes("claude")) return "#d97757";
+                if (name.includes("mistral")) return "#f2a900";
+                if (name.includes("meta") || name.includes("llama")) return "#5865f2";
+                return "#72b64b";
+            }
+
+            function duration(seconds) {
+                const minutes = Math.floor(seconds / 60);
+                const remainder = Math.round(seconds % 60);
+                return `${minutes}m ${remainder}s`;
+            }
+
+            async function loadRuns() {
+                const listingResponse = await fetch(SUBMISSIONS_API, {
+                    headers: { Accept: "application/vnd.github+json" },
+                });
+                if (!listingResponse.ok) throw new Error(`GitHub returned ${listingResponse.status}`);
+
+                const files = (await listingResponse.json()).filter((file) => file.name.endsWith(".json"));
+                const submissions = await Promise.all(
+                    files.map(async (file) => {
+                        const response = await fetch(file.download_url);
+                        if (!response.ok) throw new Error(`Could not load ${file.name}`);
+                        return { ...(await response.json()), source_url: file.html_url };
+                    }),
+                );
+                return summarizeRuns(submissions);
+            }
+
+            function renderTable(runs) {
+                const body = document.getElementById("results-body");
+                body.replaceChildren();
+
+                runs.forEach((run, index) => {
+                    const row = document.createElement("tr");
+                    const cells = [
+                        index + 1,
+                        run.model,
+                        run.runCount,
+                        run.averageRound.toFixed(1),
+                    ];
+
+                    for (const value of cells) {
+                        const cell = document.createElement("td");
+                        cell.textContent = value;
+                        row.appendChild(cell);
+                    }
+
+                    const bestCell = document.createElement("td");
+                    const best = document.createElement("a");
+                    best.href = run.bestSource;
+                    best.textContent = run.bestRound;
+                    bestCell.appendChild(best);
+                    row.appendChild(bestCell);
+
+                    const averages = [
+                        Math.round(run.tokensPerRound).toLocaleString(),
+                        duration(run.averageTime),
+                        run.averageTowers.toFixed(1),
+                    ];
+                    for (const value of averages) {
+                        const cell = document.createElement("td");
+                        cell.textContent = value;
+                        row.appendChild(cell);
+                    }
+
+                    body.appendChild(row);
+                });
+            }
+
+            function renderChart(runs) {
+                const canvas = document.getElementById("results-chart");
+                new Chart(canvas, {
+                    type: "bar",
+                    data: {
+                        labels: runs.map((run) => modelName(run.model)),
+                        datasets: [
+                            {
+                            label: "Average round",
+                            data: runs.map((run) => run.averageRound),
+                            backgroundColor: runs.map((run) => labColor(run.model)),
+                            borderRadius: 3,
+                            barPercentage: 0.72,
+                            },
+                        ],
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                border: { display: false },
+                                grid: { display: false },
+                                ticks: { maxRotation: 45, minRotation: 0 },
+                            },
+                            y: {
+                                beginAtZero: true,
+                                suggestedMax: 65,
+                                border: { display: false },
+                                grid: { color: "#e1e4dc" },
+                            },
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                displayColors: false,
+                                callbacks: {
+                                    label: (context) =>
+                                        `${context.raw.toFixed(1)} average · ${runs[context.dataIndex].runCount} runs · ${Math.round(runs[context.dataIndex].tokensPerRound).toLocaleString()} tokens/round`,
+                                },
+                            },
+                        },
+                    },
+                });
+            }
+
+            window.addEventListener("DOMContentLoaded", () => {
+                loadRuns()
+                    .then((runs) => {
+                        renderChart(runs);
+                        renderTable(runs);
+                    })
+                    .catch(() => {
+                        document.getElementById("results-body").innerHTML =
+                            '<tr><td colspan="8">GitHub unavailable.</td></tr>';
+                    });
+            });
+        </script>
+    </body>
+</html>

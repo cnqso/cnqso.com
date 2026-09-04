@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>EsotericBench</title>
+        <link rel="stylesheet" href="/static/css/bloonsbench.css?v=20260904-1" />
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" defer></script>
+    </head>
+    <body>
+        <header>
+            <nav aria-label="Primary">
+                <strong><a href="/esotericbench/">EsotericBench</a></strong>
+                <a href="/esotericbench/about">About</a>
+                <a href="https://github.com/cnqso/esotericbench">GitHub</a>
+            </nav>
+        </header>
+
+        <main>
+            <h1>EsotericBench</h1>
+            <p class="model-summary">Five-run mean · 1,000 points possible</p>
+
+            <figure class="chart-panel">
+                <canvas id="results-chart" aria-label="Average EsotericBench score by model" role="img"></canvas>
+            </figure>
+
+            <div class="table-wrap">
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Model</th>
+                            <th scope="col">Runs</th>
+                            <th scope="col">Average</th>
+                            <th scope="col">Best</th>
+                            <th scope="col">Worst</th>
+                            <th scope="col">Player tokens</th>
+                            <th scope="col">Total cost</th>
+                            <th scope="col">Total time</th>
+                            <th scope="col">Flags</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-body">
+                        <tr><td colspan="10">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+
+        <script>
+            const REPOSITORY = "cnqso/esotericbench";
+            const BRANCH = "main";
+            const TREE_API = `https://api.github.com/repos/${REPOSITORY}/git/trees/${BRANCH}?recursive=1`;
+            const RAW_ROOT = `https://raw.githubusercontent.com/${REPOSITORY}/${BRANCH}/`;
+            const REPOSITORY_ROOT = `https://github.com/${REPOSITORY}`;
+
+            // Keeps the leaderboard useful until the repository is published. Once GitHub
+            // exposes scorecards, those become the sole source of displayed results.
+            const INITIAL_RESULTS = [
+                {
+                    model: "openai/gpt-5.6-luna",
+                    label: "GPT-5.6 Luna",
+                    run_group_id: "20260903T174654281835Z",
+                    completed_repetitions: 5,
+                    average_score: 210,
+                    best_score: 224,
+                    worst_score: 174,
+                    maximum_score: 1000,
+                    player_usage: { total: 83189 },
+                    total_cost: 0.1269748,
+                    elapsed_ms: 1254099.215,
+                    integrity_flags: [],
+                },
+                {
+                    model: "z-ai/glm-5.3-flash",
+                    label: "Z.ai: GLM 5.3 Flash",
+                    run_group_id: "20260903T181310393695Z",
+                    completed_repetitions: 5,
+                    average_score: 127,
+                    best_score: 143,
+                    worst_score: 102,
+                    maximum_score: 1000,
+                    player_usage: { total: 42594 },
+                    total_cost: 0.05154151,
+                    elapsed_ms: 1579038.386,
+                    integrity_flags: [],
+                },
+            ];
+
+            function modelName(result) {
+                const label = result.label || result.model;
+                return label.includes(": ") ? label.split(": ").slice(1).join(": ") : label;
+            }
+
+            function modelSlug(model) {
+                return model
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, "-")
+                    .replace(/^-|-$/g, "");
+            }
+
+            function labColor(model) {
+                const name = model.toLowerCase();
+                const chineseLabs = [
+                    "qwen",
+                    "alibaba",
+                    "deepseek",
+                    "minimax",
+                    "moonshot",
+                    "kimi",
+                    "z-ai",
+                    "zhipu",
+                    "glm",
+                    "baidu",
+                    "tencent",
+                    "stepfun",
+                    "01-ai",
+                    "bytedance",
+                    "doubao",
+                ];
+
+                if (chineseLabs.some((lab) => name.includes(lab))) return "#d94848";
+                if (name.includes("google") || name.includes("gemini")) return "#4285f4";
+                if (name.includes("openai") || name.includes("gpt")) return "#10a37f";
+                if (name.includes("anthropic") || name.includes("claude")) return "#d97757";
+                if (name.includes("mistral")) return "#f2a900";
+                if (name.includes("meta") || name.includes("llama")) return "#5865f2";
+                return "#72b64b";
+            }
+
+            function duration(milliseconds) {
+                const seconds = Math.round(milliseconds / 1000);
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                const remainder = seconds % 60;
+                return hours ? `${hours}h ${minutes}m` : `${minutes}m ${remainder}s`;
+            }
+
+            function cost(value) {
+                return `$${value.toFixed(value < 0.1 ? 4 : 3)}`;
+            }
+
+            function scorecardPath(path) {
+                return `${REPOSITORY_ROOT}/blob/${BRANCH}/${path}`;
+            }
+
+            async function loadResults() {
+                const treeResponse = await fetch(TREE_API, {
+                    headers: { Accept: "application/vnd.github+json" },
+                });
+                if (!treeResponse.ok) throw new Error(`GitHub returned ${treeResponse.status}`);
+
+                const tree = await treeResponse.json();
+                const scorecardPaths = tree.tree
+                    .filter(
+                        (entry) =>
+                            entry.type === "blob" &&
+                            entry.path.startsWith("results/") &&
+                            /\.json$/.test(entry.path),
+                    )
+                    .map((entry) => entry.path);
+                if (!scorecardPaths.length) throw new Error("No public scorecards found");
+
+                const scorecards = await Promise.all(
+                    scorecardPaths.map(async (path) => {
+                        const response = await fetch(`${RAW_ROOT}${path}`);
+                        if (!response.ok) throw new Error(`Could not load ${path}`);
+                        return { scorecard: await response.json(), path };
+                    }),
+                );
+
+                const results = [];
+                for (const { scorecard, path } of scorecards) {
+                    if (!String(scorecard.schema_version || "").startsWith("esotericbench-public-scorecard-")) {
+                        continue;
+                    }
+                    for (const model of scorecard.models || []) {
+                        const completedScores = (model.runs || [])
+                            .filter((run) => run.status === "completed" && Number.isFinite(run.score))
+                            .map((run) => run.score);
+                        results.push({
+                            ...model,
+                            run_group_id: scorecard.run_group_id,
+                            generated_at: scorecard.generated_at,
+                            source_url: scorecardPath(path),
+                            worst_score: completedScores.length
+                                ? Math.min(...completedScores)
+                                : model.average_score,
+                        });
+                    }
+                }
+                if (!results.length) throw new Error("No valid public scorecards found");
+
+                const latestByModel = new Map();
+                for (const result of results) {
+                    const previous = latestByModel.get(result.model);
+                    if (!previous || String(result.generated_at || "") > String(previous.generated_at || "")) {
+                        latestByModel.set(result.model, result);
+                    }
+                }
+
+                return Array.from(latestByModel.values()).sort(
+                    (a, b) =>
+                        b.average_score - a.average_score ||
+                        b.best_score - a.best_score ||
+                        a.model.localeCompare(b.model),
+                );
+            }
+
+            function renderTable(results) {
+                const body = document.getElementById("results-body");
+                body.replaceChildren();
+
+                results.forEach((result, index) => {
+                    const row = document.createElement("tr");
+
+                    const rankCell = document.createElement("td");
+                    rankCell.textContent = index + 1;
+                    row.appendChild(rankCell);
+
+                    const modelCell = document.createElement("td");
+                    const modelLink = document.createElement("a");
+                    modelLink.href = `/esotericbench/model/${modelSlug(result.model)}`;
+                    modelLink.textContent = result.label || result.model;
+                    modelCell.appendChild(modelLink);
+                    row.appendChild(modelCell);
+
+                    const runsCell = document.createElement("td");
+                    runsCell.textContent = result.completed_repetitions;
+                    row.appendChild(runsCell);
+
+                    const averageCell = document.createElement("td");
+                    if (result.source_url) {
+                        const link = document.createElement("a");
+                        link.href = result.source_url;
+                        link.textContent = `${result.average_score.toFixed(1)} / ${result.maximum_score.toLocaleString()}`;
+                        averageCell.appendChild(link);
+                    } else {
+                        averageCell.textContent = `${result.average_score.toFixed(1)} / ${result.maximum_score.toLocaleString()}`;
+                    }
+                    row.appendChild(averageCell);
+
+                    const trailingValues = [
+                        `${result.best_score} / ${result.maximum_score.toLocaleString()}`,
+                        `${result.worst_score} / ${result.maximum_score.toLocaleString()}`,
+                        result.player_usage.total.toLocaleString(),
+                        cost(result.total_cost),
+                        duration(result.elapsed_ms),
+                        (result.integrity_flags || []).join(", ") || "—",
+                    ];
+                    for (const value of trailingValues) {
+                        const cell = document.createElement("td");
+                        cell.textContent = value;
+                        row.appendChild(cell);
+                    }
+
+                    body.appendChild(row);
+                });
+            }
+
+            function renderChart(results) {
+                const canvas = document.getElementById("results-chart");
+                new Chart(canvas, {
+                    type: "bar",
+                    data: {
+                        labels: results.map(modelName),
+                        datasets: [
+                            {
+                                label: "Average score",
+                                data: results.map((result) => result.average_score),
+                                backgroundColor: results.map((result) => labColor(result.model)),
+                                borderRadius: 3,
+                                barPercentage: 0.72,
+                            },
+                        ],
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                border: { display: false },
+                                grid: { display: false },
+                                ticks: { maxRotation: 45, minRotation: 0 },
+                            },
+                            y: {
+                                beginAtZero: true,
+                                suggestedMax: 1000,
+                                border: { display: false },
+                                grid: { color: "#e1e4dc" },
+                            },
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                displayColors: false,
+                                callbacks: {
+                                    label: (context) => {
+                                        const result = results[context.dataIndex];
+                                        return `${context.raw.toFixed(1)} / ${result.maximum_score.toLocaleString()} · best ${result.best_score} · worst ${result.worst_score}`;
+                                    },
+                                },
+                            },
+                        },
+                    },
+                });
+            }
+
+            window.addEventListener("DOMContentLoaded", () => {
+                loadResults()
+                    .catch(() => INITIAL_RESULTS)
+                    .then((results) => {
+                        renderChart(results);
+                        renderTable(results);
+                    });
+            });
+        </script>
+    </body>
+</html>

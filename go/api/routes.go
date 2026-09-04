@@ -65,6 +65,8 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	routes := []string{
+		"/bloonsbench",
+		"/esotericbench",
 		"/hexagons",
 		"/splits",
 		"/spirals",
@@ -115,6 +117,33 @@ func ReverseWordleHandler(w http.ResponseWriter, r *http.Request) {
 
 func PianoFlashcardsHandler(w http.ResponseWriter, r *http.Request) {
 	ServeTemplate(w, r, "piano_flashcards.html", nil)
+}
+
+func BloonsBenchHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.URL.Path {
+	case "/bloonsbench/":
+		ServeTemplate(w, r, "bloonsbench.html", nil)
+	case "/bloonsbench/about":
+		ServeTemplate(w, r, "bloonsbench_about.html", nil)
+	default:
+		FourHundredHandler(w, r, http.StatusNotFound)
+	}
+}
+
+func EsotericBenchHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.URL.Path {
+	case "/esotericbench/":
+		ServeTemplate(w, r, "esotericbench.html", nil)
+	case "/esotericbench/about":
+		ServeTemplate(w, r, "esotericbench_about.html", nil)
+	default:
+		if strings.HasPrefix(r.URL.Path, "/esotericbench/model/") &&
+			strings.TrimPrefix(r.URL.Path, "/esotericbench/model/") != "" {
+			ServeTemplate(w, r, "esotericbench_model.html", nil)
+			return
+		}
+		FourHundredHandler(w, r, http.StatusNotFound)
+	}
 }
 
 func StaticHandler(w http.ResponseWriter, r *http.Request) {

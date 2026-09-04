@@ -1,0 +1,222 @@
+:root {
+    color: #1c211a;
+    background: #f4f5f1;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-synthesis: none;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+}
+
+header {
+    background: #ffffff;
+    border-bottom: 1px solid #d9ddd4;
+}
+
+nav {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    max-width: 70rem;
+    margin: 0 auto;
+    padding: 1.1rem 1.25rem;
+}
+
+a {
+    color: inherit;
+    text-underline-offset: 0.2em;
+}
+
+nav a {
+    text-decoration: none;
+}
+
+nav a:hover,
+nav a:focus-visible {
+    text-decoration: underline;
+}
+
+main {
+    max-width: 70rem;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 4rem;
+}
+
+h1 {
+    margin: 0 0 1.5rem;
+    font-size: 1.4rem;
+    letter-spacing: -0.02em;
+}
+
+.chart-panel {
+    height: 32rem;
+    margin: 0;
+    padding: 1.25rem;
+    background: #ffffff;
+    border: 1px solid #d9ddd4;
+}
+
+.table-wrap {
+    margin-top: 1rem;
+    overflow-x: auto;
+    background: #ffffff;
+    border: 1px solid #d9ddd4;
+}
+
+table {
+    width: 100%;
+    min-width: 48rem;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+}
+
+th,
+td {
+    padding: 0.8rem 0.9rem;
+    border-bottom: 1px solid #e4e7e0;
+    text-align: right;
+    white-space: nowrap;
+}
+
+th:nth-child(2),
+td:nth-child(2) {
+    text-align: left;
+}
+
+th {
+    color: #60675d;
+    font-size: 0.76rem;
+    font-weight: 650;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+td {
+    font-size: 0.9rem;
+}
+
+tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+tbody tr:hover {
+    background: #f7f9f4;
+}
+
+.question-table {
+    min-width: 24rem;
+}
+
+.leaderboard-table {
+    min-width: 62rem;
+}
+
+.question-table th:first-child,
+.question-table td:first-child {
+    text-align: left;
+}
+
+.question-table th:not(:first-child),
+.question-table td:not(:first-child) {
+    text-align: right;
+}
+
+.model-summary {
+    margin: -0.75rem 0 1.5rem;
+    color: #60675d;
+    font-variant-numeric: tabular-nums;
+}
+
+.table-note {
+    margin: 0 0 0.55rem;
+    color: #60675d;
+    font-size: 0.8rem;
+}
+
+.question-table tr.section-start td {
+    border-top: 2px solid #cbd0c6;
+}
+
+.question-table .score-cell {
+    background-image: linear-gradient(
+        90deg,
+        rgb(16 163 127 / 12%) 0 var(--score-pct),
+        transparent var(--score-pct) 100%
+    );
+}
+
+.readme {
+    max-width: 52rem;
+    line-height: 1.6;
+}
+
+.readme h1,
+.readme h2,
+.readme h3 {
+    margin-top: 2em;
+    margin-bottom: 0.7em;
+    letter-spacing: -0.025em;
+}
+
+.readme h1 {
+    margin-top: 0;
+}
+
+.readme img {
+    max-width: 100%;
+    height: auto;
+}
+
+.readme table {
+    display: block;
+    min-width: 0;
+    overflow-x: auto;
+}
+
+.readme th,
+.readme td {
+    text-align: left;
+    white-space: normal;
+}
+
+.readme pre {
+    overflow-x: auto;
+    padding: 1rem;
+    background: #e9ece5;
+}
+
+.readme code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.9em;
+}
+
+.readme details {
+    padding: 0.8rem 0;
+    border-bottom: 1px solid #d9ddd4;
+}
+
+@media (max-width: 40rem) {
+    nav {
+        gap: 1rem;
+        padding: 0.9rem 1rem;
+    }
+
+    main {
+        padding: 1.5rem 1rem 3rem;
+    }
+
+    .chart-panel {
+        height: 25rem;
+        padding: 0.6rem;
+    }
+
+    th,
+    td {
+        padding: 0.7rem;
+    }
+}

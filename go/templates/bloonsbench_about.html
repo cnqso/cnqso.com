@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>About · BloonsBench</title>
+        <link rel="stylesheet" href="/static/css/bloonsbench.css?v=20260902-2" />
+        <script src="https://cdn.jsdelivr.net/npm/marked@18.0.11/lib/marked.umd.js" defer></script>
+    </head>
+    <body>
+        <header>
+            <nav aria-label="Primary">
+                <a href="/bloonsbench/">BloonsBench</a>
+                <strong><a href="/bloonsbench/about">About</a></strong>
+                <a href="https://github.com/cnqso/bloonsbench">GitHub</a>
+            </nav>
+        </header>
+
+        <main class="readme" id="readme">Loading…</main>
+
+        <script>
+            const README_URL = "https://raw.githubusercontent.com/cnqso/bloonsbench/main/README.md";
+            const REPOSITORY_URL = "https://github.com/cnqso/bloonsbench";
+            const RAW_ROOT = "https://raw.githubusercontent.com/cnqso/bloonsbench/main/";
+
+            function isRelative(url) {
+                return (
+                    url &&
+                    !url.startsWith("#") &&
+                    !/^[a-z][a-z\d+.-]*:/i.test(url) &&
+                    !url.startsWith("//")
+                );
+            }
+
+            function fixRelativeURLs(readme) {
+                for (const link of readme.querySelectorAll("a[href]")) {
+                    const href = link.getAttribute("href");
+                    if (isRelative(href)) link.href = `${REPOSITORY_URL}/blob/main/${href}`;
+                }
+
+                for (const image of readme.querySelectorAll("img[src]")) {
+                    const src = image.getAttribute("src");
+                    if (isRelative(src)) image.src = new URL(src, RAW_ROOT).href;
+                }
+            }
+
+            window.addEventListener("DOMContentLoaded", () => {
+                fetch(README_URL)
+                    .then((response) => {
+                        if (!response.ok) throw new Error(`GitHub returned ${response.status}`);
+                        return response.text();
+                    })
+                    .then((readme) => {
+                        const container = document.getElementById("readme");
+                        container.innerHTML = marked.parse(readme);
+                        fixRelativeURLs(container);
+                    })
+                    .catch(() => {
+                        document.getElementById("readme").textContent = "GitHub unavailable.";
+                    });
+            });
+        </script>
+    </body>
+</html>
