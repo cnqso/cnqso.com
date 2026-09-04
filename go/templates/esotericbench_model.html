@@ -42,27 +42,6 @@
             const BRANCH = "main";
             const TREE_API = `https://api.github.com/repos/${REPOSITORY}/git/trees/${BRANCH}?recursive=1`;
             const RAW_ROOT = `https://raw.githubusercontent.com/${REPOSITORY}/${BRANCH}/`;
-            const QUESTION_MAXIMUMS = {
-                "1A": 130,
-                "1B": 150,
-                "1C": 170,
-                "1D": 140,
-                "1E": 160,
-                "2A": 130,
-                "2B": 10,
-                "2C": 10,
-                "2D": 10,
-                "3A": 10,
-                "3B": 10,
-                "4A": 10,
-                "4B": 10,
-                "5A": 10,
-                "5B": 10,
-                "5C": 10,
-                "5D": 10,
-                "6": 10,
-            };
-
             function modelSlug(model) {
                 return model
                     .toLowerCase()
@@ -142,8 +121,7 @@
                 const body = document.getElementById("question-body");
                 body.replaceChildren();
                 let previousSection = null;
-                for (const [question, average, best, worst, suppliedMaximum] of result.questions) {
-                    const maximum = suppliedMaximum || QUESTION_MAXIMUMS[question];
+                for (const [question, average, best, worst, maximum] of result.questions) {
                     const section = question.charAt(0);
                     const row = document.createElement("tr");
                     if (previousSection !== null && section !== previousSection) {
