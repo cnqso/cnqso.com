@@ -63,67 +63,6 @@
                 "6": 10,
             };
 
-            const INITIAL_RESULTS = [
-                {
-                    model: "openai/gpt-5.6-luna",
-                    label: "GPT-5.6 Luna",
-                    completed_repetitions: 5,
-                    average_score: 210,
-                    best_score: 224,
-                    worst_score: 174,
-                    maximum_score: 1000,
-                    questions: [
-                        ["1A", 67, 81, 51],
-                        ["1B", 12, 40, 0],
-                        ["1C", 68.4, 82, 52],
-                        ["1D", 0, 0, 0],
-                        ["1E", 2.6, 10, 0],
-                        ["2A", 30, 30, 30],
-                        ["2B", 0, 0, 0],
-                        ["2C", 0, 0, 0],
-                        ["2D", 0, 0, 0],
-                        ["3A", 8, 10, 0],
-                        ["3B", 0, 0, 0],
-                        ["4A", 0, 0, 0],
-                        ["4B", 0, 0, 0],
-                        ["5A", 0, 0, 0],
-                        ["5B", 10, 10, 10],
-                        ["5C", 10, 10, 10],
-                        ["5D", 2, 10, 0],
-                        ["6", 0, 0, 0],
-                    ],
-                },
-                {
-                    model: "z-ai/glm-5.3-flash",
-                    label: "Z.ai: GLM 5.3 Flash",
-                    completed_repetitions: 5,
-                    average_score: 127,
-                    best_score: 143,
-                    worst_score: 102,
-                    maximum_score: 1000,
-                    questions: [
-                        ["1A", 35, 50, 21],
-                        ["1B", 45.2, 62, 21],
-                        ["1C", 8.6, 12, 0],
-                        ["1D", 0, 0, 0],
-                        ["1E", 0.2, 1, 0],
-                        ["2A", 14, 30, 0],
-                        ["2B", 0, 0, 0],
-                        ["2C", 0, 0, 0],
-                        ["2D", 0, 0, 0],
-                        ["3A", 2, 10, 0],
-                        ["3B", 0, 0, 0],
-                        ["4A", 0, 0, 0],
-                        ["4B", 0, 0, 0],
-                        ["5A", 0, 0, 0],
-                        ["5B", 10, 10, 10],
-                        ["5C", 10, 10, 10],
-                        ["5D", 2, 10, 0],
-                        ["6", 0, 0, 0],
-                    ],
-                },
-            ];
-
             function modelSlug(model) {
                 return model
                     .toLowerCase()
@@ -236,17 +175,19 @@
             window.addEventListener("DOMContentLoaded", () => {
                 const requestedSlug = location.pathname.split("/").filter(Boolean).at(-1);
                 loadResults()
-                    .catch(() => INITIAL_RESULTS)
                     .then((results) => {
                         const result = results.find((candidate) => modelSlug(candidate.model) === requestedSlug);
                         if (!result) throw new Error("Model not found");
                         renderModel(result);
                     })
-                    .catch(() => {
-                        document.getElementById("model-name").textContent = "Model not found";
+                    .catch((error) => {
+                        const missing = error.message === "Model not found";
+                        document.getElementById("model-name").textContent = missing
+                            ? "Model not found"
+                            : "Results unavailable";
                         document.getElementById("model-summary").textContent = "";
                         document.getElementById("question-body").innerHTML =
-                            '<tr><td colspan="4">No scorecard found.</td></tr>';
+                            `<tr><td colspan="4">${missing ? "No scorecard found." : "Could not load results from GitHub."}</td></tr>`;
                     });
             });
         </script>

@@ -54,39 +54,6 @@
             const RAW_ROOT = `https://raw.githubusercontent.com/${REPOSITORY}/${BRANCH}/`;
             const REPOSITORY_ROOT = `https://github.com/${REPOSITORY}`;
 
-            // Keeps the leaderboard useful until the repository is published. Once GitHub
-            // exposes scorecards, those become the sole source of displayed results.
-            const INITIAL_RESULTS = [
-                {
-                    model: "openai/gpt-5.6-luna",
-                    label: "GPT-5.6 Luna",
-                    run_group_id: "20260903T174654281835Z",
-                    completed_repetitions: 5,
-                    average_score: 210,
-                    best_score: 224,
-                    worst_score: 174,
-                    maximum_score: 1000,
-                    player_usage: { total: 83189 },
-                    total_cost: 0.1269748,
-                    elapsed_ms: 1254099.215,
-                    integrity_flags: [],
-                },
-                {
-                    model: "z-ai/glm-5.3-flash",
-                    label: "Z.ai: GLM 5.3 Flash",
-                    run_group_id: "20260903T181310393695Z",
-                    completed_repetitions: 5,
-                    average_score: 127,
-                    best_score: 143,
-                    worst_score: 102,
-                    maximum_score: 1000,
-                    player_usage: { total: 42594 },
-                    total_cost: 0.05154151,
-                    elapsed_ms: 1579038.386,
-                    integrity_flags: [],
-                },
-            ];
-
             function modelName(result) {
                 const label = result.label || result.model;
                 return label.includes(": ") ? label.split(": ").slice(1).join(": ") : label;
@@ -307,10 +274,13 @@
 
             window.addEventListener("DOMContentLoaded", () => {
                 loadResults()
-                    .catch(() => INITIAL_RESULTS)
                     .then((results) => {
                         renderChart(results);
                         renderTable(results);
+                    })
+                    .catch(() => {
+                        document.getElementById("results-body").innerHTML =
+                            '<tr><td colspan="10">Results are temporarily unavailable.</td></tr>';
                     });
             });
         </script>
