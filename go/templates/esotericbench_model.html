@@ -4,7 +4,7 @@
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Model · EsotericBench</title>
-        <link rel="stylesheet" href="/static/css/bloonsbench.css?v=20260904-1" />
+        <link rel="stylesheet" href="/static/css/bloonsbench.css?v=20260905-1" />
     </head>
     <body>
         <header>
@@ -26,12 +26,13 @@
                         <tr>
                             <th scope="col">Question</th>
                             <th scope="col">Average</th>
-                            <th scope="col">Best</th>
-                            <th scope="col">Worst</th>
+                            <th scope="col">Model best</th>
+                            <th scope="col">Model worst</th>
+                            <th scope="col">Overall best</th>
                         </tr>
                     </thead>
                     <tbody id="question-body">
-                        <tr><td colspan="4">Loading…</td></tr>
+                        <tr><td colspan="5">Loading…</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -109,7 +110,30 @@
                 return Array.from(latestByModel.values());
             }
 
-            function renderModel(result) {
+            function questionRecords(results) {
+                const records = new Map();
+                for (const result of results) {
+                    for (const [question, , best] of result.questions) {
+                        if (!Number.isFinite(best)) continue;
+                        const holder = {
+                            model: result.model,
+                            label: result.label || result.model,
+                        };
+                        const record = records.get(question);
+                        if (!record || best > record.score) {
+                            records.set(question, { score: best, holders: [holder] });
+                        } else if (best === record.score) {
+                            record.holders.push(holder);
+                        }
+                    }
+                }
+                for (const record of records.values()) {
+                    record.holders.sort((a, b) => a.label.localeCompare(b.label));
+                }
+                return records;
+            }
+
+            function renderModel(result, records) {
                 const label = result.label || result.model;
                 document.title = `${label} · EsotericBench`;
                 document.getElementById("model-name").textContent = label;
@@ -127,8 +151,22 @@
                     }
                     previousSection = section;
 
+                    const questionCell = document.createElement("td");
+                    questionCell.textContent = question;
+                    const record = records.get(question);
+                    const soleRecordHolder =
+                        record?.holders.length === 1 && record.holders[0].model === result.model;
+                    if (soleRecordHolder) {
+                        const star = document.createElement("span");
+                        star.className = "record-star";
+                        star.textContent = "★";
+                        star.title = "Sole record holder for this question.";
+                        star.setAttribute("aria-label", "Sole record holder for this question");
+                        questionCell.append(" ", star);
+                    }
+                    row.appendChild(questionCell);
+
                     const values = [
-                        question,
                         `${Number(average).toFixed(1)} / ${maximum}`,
                         `${best} / ${maximum}`,
                         `${worst} / ${maximum}`,
@@ -136,7 +174,7 @@
                     values.forEach((value, index) => {
                         const cell = document.createElement("td");
                         cell.textContent = value;
-                        if (index === 1) {
+                        if (index === 0) {
                             const percentage = Math.max(0, Math.min(100, (average / maximum) * 100));
                             cell.classList.add("score-cell");
                             cell.style.setProperty("--score-pct", `${percentage}%`);
@@ -144,6 +182,13 @@
                         }
                         row.appendChild(cell);
                     });
+
+                    const recordCell = document.createElement("td");
+                    recordCell.textContent = record ? `${record.score} / ${maximum}` : "—";
+                    if (record) {
+                        recordCell.title = `Held by:\n${record.holders.map((holder) => holder.label).join("\n")}`;
+                    }
+                    row.appendChild(recordCell);
                     body.appendChild(row);
                 }
             }
@@ -154,7 +199,7 @@
                     .then((results) => {
                         const result = results.find((candidate) => modelSlug(candidate.model) === requestedSlug);
                         if (!result) throw new Error("Model not found");
-                        renderModel(result);
+                        renderModel(result, questionRecords(results));
                     })
                     .catch((error) => {
                         const missing = error.message === "Model not found";
@@ -163,7 +208,7 @@
                             : "Results unavailable";
                         document.getElementById("model-summary").textContent = "";
                         document.getElementById("question-body").innerHTML =
-                            `<tr><td colspan="4">${missing ? "No scorecard found." : "Could not load results from GitHub."}</td></tr>`;
+                            `<tr><td colspan="5">${missing ? "No scorecard found." : "Could not load results from GitHub."}</td></tr>`;
                     });
             });
         </script>
