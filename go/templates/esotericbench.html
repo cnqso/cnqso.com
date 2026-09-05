@@ -18,7 +18,7 @@
 
         <main>
             <h1>EsotericBench</h1>
-            <p class="model-summary">Five-run mean · 1,000 points possible</p>
+            <p class="model-summary">Five-run mean · best/worst sum each question’s observed extrema</p>
 
             <figure class="chart-panel">
                 <canvas id="results-chart" aria-label="Average EsotericBench score by model" role="img"></canvas>
@@ -32,8 +32,8 @@
                             <th scope="col">Model</th>
                             <th scope="col">Runs</th>
                             <th scope="col">Average</th>
-                            <th scope="col">Best</th>
-                            <th scope="col">Worst</th>
+                            <th scope="col">Segment best</th>
+                            <th scope="col">Segment worst</th>
                             <th scope="col">Player tokens</th>
                             <th scope="col">Total cost</th>
                             <th scope="col">Total time</th>
@@ -142,17 +142,11 @@
                         continue;
                     }
                     for (const model of scorecard.models || []) {
-                        const completedScores = (model.runs || [])
-                            .filter((run) => run.status === "completed" && Number.isFinite(run.score))
-                            .map((run) => run.score);
                         results.push({
                             ...model,
                             run_group_id: scorecard.run_group_id,
                             generated_at: scorecard.generated_at,
                             source_url: scorecardPath(path),
-                            worst_score: completedScores.length
-                                ? Math.min(...completedScores)
-                                : model.average_score,
                         });
                     }
                 }
@@ -263,7 +257,7 @@
                                 callbacks: {
                                     label: (context) => {
                                         const result = results[context.dataIndex];
-                                        return `${context.raw.toFixed(1)} / ${result.maximum_score.toLocaleString()} · best ${result.best_score} · worst ${result.worst_score}`;
+                                        return `${context.raw.toFixed(1)} / ${result.maximum_score.toLocaleString()} · segment best ${result.best_score} · segment worst ${result.worst_score}`;
                                     },
                                 },
                             },
