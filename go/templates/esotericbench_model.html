@@ -4,7 +4,7 @@
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Model · EsotericBench</title>
-        <link rel="stylesheet" href="/static/css/bloonsbench.css?v=20260905-1" />
+        <link rel="stylesheet" href="/static/css/bloonsbench.css?v=20260905-2" />
     </head>
     <body>
         <header>
@@ -28,7 +28,7 @@
                             <th scope="col">Average</th>
                             <th scope="col">Model best</th>
                             <th scope="col">Model worst</th>
-                            <th scope="col">Overall best</th>
+                            <th scope="col">Record</th>
                         </tr>
                     </thead>
                     <tbody id="question-body">
@@ -133,6 +133,69 @@
                 return records;
             }
 
+            function installTooltips() {
+                const tooltip = document.createElement("div");
+                tooltip.className = "simple-tooltip";
+                tooltip.setAttribute("role", "tooltip");
+                tooltip.hidden = true;
+                document.body.appendChild(tooltip);
+                let activeTarget = null;
+
+                function show(target) {
+                    activeTarget = target;
+                    tooltip.textContent = target.dataset.tooltip;
+                    tooltip.hidden = false;
+                    const targetRect = target.getBoundingClientRect();
+                    const tooltipRect = tooltip.getBoundingClientRect();
+                    const margin = 8;
+                    let left = targetRect.right - tooltipRect.width;
+                    left = Math.max(margin, Math.min(left, window.innerWidth - tooltipRect.width - margin));
+                    let top = targetRect.bottom + margin;
+                    if (top + tooltipRect.height > window.innerHeight - margin) {
+                        top = targetRect.top - tooltipRect.height - margin;
+                    }
+                    tooltip.style.left = `${left}px`;
+                    tooltip.style.top = `${Math.max(margin, top)}px`;
+                }
+
+                function hide() {
+                    activeTarget = null;
+                    tooltip.hidden = true;
+                }
+
+                document.addEventListener("pointerover", (event) => {
+                    const target = event.target.closest?.(".tooltip-target");
+                    if (target && event.pointerType !== "touch") show(target);
+                });
+                document.addEventListener("pointerout", (event) => {
+                    if (
+                        activeTarget &&
+                        event.pointerType !== "touch" &&
+                        !activeTarget.contains(event.relatedTarget) &&
+                        document.activeElement !== activeTarget
+                    ) {
+                        hide();
+                    }
+                });
+                document.addEventListener("focusin", (event) => {
+                    const target = event.target.closest?.(".tooltip-target");
+                    if (target) show(target);
+                });
+                document.addEventListener("focusout", (event) => {
+                    if (activeTarget === event.target) hide();
+                });
+                document.addEventListener("click", (event) => {
+                    const target = event.target.closest?.(".tooltip-target");
+                    if (target) show(target);
+                    else hide();
+                });
+                document.addEventListener("keydown", (event) => {
+                    if (event.key === "Escape") hide();
+                });
+                window.addEventListener("scroll", hide, true);
+                window.addEventListener("resize", hide);
+            }
+
             function renderModel(result, records) {
                 const label = result.label || result.model;
                 document.title = `${label} · EsotericBench`;
@@ -158,9 +221,10 @@
                         record?.holders.length === 1 && record.holders[0].model === result.model;
                     if (soleRecordHolder) {
                         const star = document.createElement("span");
-                        star.className = "record-star";
+                        star.className = "record-star tooltip-target";
                         star.textContent = "★";
-                        star.title = "Sole record holder for this question.";
+                        star.dataset.tooltip = "Sole record holder for this question.";
+                        star.tabIndex = 0;
                         star.setAttribute("aria-label", "Sole record holder for this question");
                         questionCell.append(" ", star);
                     }
@@ -186,7 +250,11 @@
                     const recordCell = document.createElement("td");
                     recordCell.textContent = record ? `${record.score} / ${maximum}` : "—";
                     if (record) {
-                        recordCell.title = `Held by:\n${record.holders.map((holder) => holder.label).join("\n")}`;
+                        const holderText = `Held by:\n${record.holders.map((holder) => holder.label).join("\n")}`;
+                        recordCell.dataset.tooltip = holderText;
+                        recordCell.classList.add("tooltip-target");
+                        recordCell.tabIndex = 0;
+                        recordCell.setAttribute("aria-label", `${recordCell.textContent}. ${holderText}`);
                     }
                     row.appendChild(recordCell);
                     body.appendChild(row);
@@ -194,6 +262,7 @@
             }
 
             window.addEventListener("DOMContentLoaded", () => {
+                installTooltips();
                 const requestedSlug = location.pathname.split("/").filter(Boolean).at(-1);
                 loadResults()
                     .then((results) => {

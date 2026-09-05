@@ -152,7 +152,31 @@ tbody tr:hover {
 
 .record-star {
     color: #c69200;
+}
+
+.tooltip-target {
     cursor: help;
+}
+
+.tooltip-target:focus-visible {
+    outline: 2px solid #8e9688;
+    outline-offset: 2px;
+}
+
+.simple-tooltip {
+    position: fixed;
+    z-index: 1000;
+    max-width: min(20rem, calc(100vw - 1rem));
+    padding: 0.45rem 0.6rem;
+    border-radius: 0.25rem;
+    background: #1c211a;
+    color: #ffffff;
+    box-shadow: 0 0.2rem 0.7rem rgb(0 0 0 / 18%);
+    font-size: 0.78rem;
+    line-height: 1.35;
+    text-align: left;
+    white-space: pre-line;
+    pointer-events: none;
 }
 
 .readme {
