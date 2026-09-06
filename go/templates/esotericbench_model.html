@@ -18,7 +18,7 @@
         <main>
             <h1 id="model-name">Loading…</h1>
             <p class="model-summary" id="model-summary"></p>
-            <p class="table-note">Question text withheld · points / maximum · headline extrema are summed by question</p>
+            <p class="table-note">Question text withheld · points / maximum · record is the highest five-run average</p>
 
             <div class="table-wrap">
                 <table class="question-table">
@@ -58,6 +58,7 @@
                         question.best_score,
                         question.worst_score,
                         question.maximum_score,
+                        question.run_scores,
                     ]),
                 );
                 return {
@@ -113,16 +114,25 @@
             function questionRecords(results) {
                 const records = new Map();
                 for (const result of results) {
-                    for (const [question, , best] of result.questions) {
-                        if (!Number.isFinite(best)) continue;
+                    if (result.completed_repetitions !== 5 || result.expected_repetitions !== 5) continue;
+                    for (const [question, , , , , runScores] of result.questions) {
+                        if (
+                            !Array.isArray(runScores) ||
+                            runScores.length !== 5 ||
+                            !runScores.every(Number.isFinite)
+                        ) {
+                            continue;
+                        }
+                        const average = runScores.reduce((sum, score) => sum + score, 0) / 5;
+                        if (!Number.isFinite(average)) continue;
                         const holder = {
                             model: result.model,
                             label: result.label || result.model,
                         };
                         const record = records.get(question);
-                        if (!record || best > record.score) {
-                            records.set(question, { score: best, holders: [holder] });
-                        } else if (best === record.score) {
+                        if (!record || average > record.score) {
+                            records.set(question, { score: average, holders: [holder] });
+                        } else if (average === record.score) {
                             record.holders.push(holder);
                         }
                     }
@@ -248,7 +258,7 @@
                     });
 
                     const recordCell = document.createElement("td");
-                    recordCell.textContent = record ? `${record.score} / ${maximum}` : "—";
+                    recordCell.textContent = record ? `${Number(record.score).toFixed(1)} / ${maximum}` : "—";
                     if (record) {
                         const holderText = `Held by:\n${record.holders.map((holder) => holder.label).join("\n")}`;
                         recordCell.dataset.tooltip = holderText;
