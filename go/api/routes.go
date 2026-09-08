@@ -65,12 +65,10 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	routes := []string{
+		"/hexagons",
+		"/spirals",
 		"/bloonsbench",
 		"/esotericbench",
-		"/hexagons",
-		"/splits",
-		"/spirals",
-		"/reverse-wordle-solver",
 	}
 	ServeTemplate(w, r, "index.html", struct {
 		Routes []string
