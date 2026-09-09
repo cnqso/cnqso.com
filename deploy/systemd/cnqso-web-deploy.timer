@@ -1,0 +1,12 @@
+[Unit]
+Description=Check GitHub for cnqso.com updates
+
+[Timer]
+OnBootSec=1min
+OnUnitInactiveSec=1min
+AccuracySec=10s
+RandomizedDelaySec=10s
+Unit=cnqso-web-deploy.service
+
+[Install]
+WantedBy=timers.target

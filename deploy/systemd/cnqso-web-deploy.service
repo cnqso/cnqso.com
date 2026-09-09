@@ -1,0 +1,11 @@
+[Unit]
+Description=Deploy the latest cnqso.com main branch
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/default/cnqso-web
+Environment="PATH=/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+ExecStart=/usr/local/bin/cnqso-web-deploy
+TimeoutStartSec=600

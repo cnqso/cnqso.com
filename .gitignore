@@ -1,0 +1,15 @@
+.DS_Store
+.claude/
+/cnqso-web-server.service
+/webm/
+/wordle-data/
+/go/server
+/go/db/*.db
+/go/static/audio/*
+/go/static/fonts/*
+/go/static/images/*
+/go/static/js/*
+/go/static/petrarchive/*
+/go/static/react/*
+/submodules/*/dist/
+/submodules/*/node_modules/
