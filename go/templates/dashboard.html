@@ -116,6 +116,7 @@
     </head>
     <body>
         <div class="container">
+            <p><a href="/admin/odir/">library admin</a> / <a href="/dashboard/journeys">visitor journeys</a></p>
             <div class="controls">
                 <label for="timePeriod">Time Period:</label>
                 <select id="timePeriod">
@@ -138,7 +139,7 @@
                 </div>
                 <div class="stat-box">
                     <div class="stat-number" id="errorRate">-</div>
-                    <div class="stat-label">Error Rate (%)</div>
+                    <div class="stat-label">Server Error Rate (%)</div>
                 </div>
                 <div class="stat-box">
                     <div class="stat-number" id="avgResponseTime">-</div>
@@ -191,6 +192,7 @@
                     const response = await fetch(
                         `/api/dashboard?period=${timePeriod}`,
                     );
+                    if (response.status === 401) { window.location.href = "/admin/odir/login?next=/dashboard"; return; }
                     if (!response.ok) {
                         throw new Error(
                             `HTTP error! status: ${response.status}`,
@@ -214,7 +216,7 @@
                 document.getElementById("errorRate").textContent =
                     data.stats.errorRate.toFixed(1);
                 document.getElementById("avgResponseTime").textContent =
-                    Math.round(data.stats.avgResponseTime);
+                    data.stats.avgResponseTime.toFixed(2);
 
                 updateMetricList(
                     "topIPs",

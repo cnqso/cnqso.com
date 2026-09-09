@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"server/db"
+	"server/internal/requestlog"
 	"server/types"
 	"time"
 
@@ -30,13 +31,17 @@ type Entry struct {
 }
 
 type AccessEntry struct {
+	Fingerprint  string    `json:"fingerprint,omitempty"`
+	VisitorID    string    `json:"visitor_id,omitempty"`
+	EventKind    string    `json:"event_kind,omitempty"`
+	Referrer     string    `json:"referrer,omitempty"`
 	Timestamp    time.Time `json:"timestamp"`
 	Level        Level     `json:"level"`
 	Message      string    `json:"message"`
 	Method       string    `json:"method"`
 	URL          string    `json:"url"`
 	StatusCode   int       `json:"status_code,omitempty"`
-	ResponseTime int64     `json:"response_time_ms,omitempty"`
+	ResponseTime float64   `json:"response_time_ms,omitempty"`
 	UserAgent    string    `json:"user_agent,omitempty"`
 	RemoteAddr   string    `json:"remote_addr,omitempty"`
 	RequestSize  int64     `json:"request_size,omitempty"`
@@ -55,34 +60,27 @@ func logToOutput(entry any, level Level) {
 	switch e := entry.(type) {
 	case Entry:
 		fmt.Fprintf(output, "[%s] %s: %s\n", e.Level, e.Timestamp.Format("15:04:05"), e.Message)
+		// Capture caller-owned maps before the worker can outlive or race them.
+		if e.Data != nil {
+			data, err := json.Marshal(e.Data)
+			if err != nil {
+				log.Printf("Error encoding log data: %v", err)
+				e.Data = nil
+			} else {
+				e.Data = json.RawMessage(data)
+			}
+			entry = e
+		}
 	case AccessEntry:
-		fmt.Fprintf(output, "[ACCESS] %s: %s %s %d (%dms) %s\n",
+		fmt.Fprintf(output, "[ACCESS] %s: %s %s %d (%.3fms) %s\n",
 			e.Timestamp.Format("15:04:05"), e.Method, e.URL, e.StatusCode, e.ResponseTime, e.RemoteAddr)
 	}
 
-	if db.DB != nil {
-		switch e := entry.(type) {
-		case Entry:
-			var dataJSON string
-			if e.Data != nil {
-				if jsonData, err := json.Marshal(e.Data); err == nil {
-					dataJSON = string(jsonData)
-				}
-			}
-			_, err := db.DB.Exec("INSERT INTO dev_logs (timestamp, level, message, data) VALUES (?, ?, ?, ?)",
-				e.Timestamp, e.Level, e.Message, dataJSON)
-			if err != nil {
-				log.Printf("Error inserting log entry: %v", err)
-			}
-		case AccessEntry:
-			var dataJSON string
-			if e.Data != nil {
-				if jsonData, err := json.Marshal(e.Data); err == nil {
-					dataJSON = string(jsonData)
-				}
-			}
-			db.DB.Exec("INSERT INTO access_logs (timestamp, method, url, status_code, response_time, remote_addr, request_size, response_size, user_agent, data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-				e.Timestamp, e.Method, e.URL, e.StatusCode, e.ResponseTime, e.RemoteAddr, e.RequestSize, e.ResponseSize, e.UserAgent, dataJSON)
+	if writer != nil {
+		writer.enqueue(entry)
+	} else if db.DB != nil {
+		if err := persistLog(db.DB, entry); err != nil {
+			log.Printf("Error inserting log entry: %v", err)
 		}
 	}
 }
@@ -144,11 +142,15 @@ func HTTPSuccess(w http.ResponseWriter, r *http.Request, message string) {
 }
 
 func HTTPError(w http.ResponseWriter, r *http.Request, err error, status int, message string) {
+	errorText := ""
+	if err != nil {
+		errorText = err.Error()
+	}
 	entry := Entry{
 		Timestamp: time.Now().UTC(),
 		Level:     LevelError,
 		Message:   message,
-		Data:      map[string]any{"error": err.Error(), "status": status, "method": r.Method, "route": r.URL.Path, "UserAgent": r.UserAgent(), "RemoteAddr": getRemoteAddr(r), "RequestSize": r.ContentLength},
+		Data:      map[string]any{"error": errorText, "status": status, "method": r.Method, "route": requestlog.Path(r.URL.EscapedPath()), "UserAgent": r.UserAgent(), "RemoteAddr": getRemoteAddr(r), "RequestSize": r.ContentLength},
 	}
 	logToOutput(entry, LevelError)
 	w.WriteHeader(status)
@@ -156,14 +158,4 @@ func HTTPError(w http.ResponseWriter, r *http.Request, err error, status int, me
 		Success: false,
 		Message: message,
 	})
-}
-
-func getRemoteAddr(r *http.Request) string {
-	if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
-		return forwarded
-	}
-	if realIP := r.Header.Get("X-Real-IP"); realIP != "" {
-		return realIP
-	}
-	return r.RemoteAddr
 }

@@ -24,6 +24,8 @@ func Init() {
 		panic("Failed to initialize logging database: " + err.Error())
 	}
 
+	logs.StartWriter()
+
 	if config.CompileTypeScript {
 		go compileTypeScript()
 	}

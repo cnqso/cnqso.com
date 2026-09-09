@@ -1,13 +1,16 @@
 package api
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"net/http"
 	"server/db"
+	"server/internal/requestlog"
 	"server/logs"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type DashboardData struct {
@@ -70,79 +73,67 @@ type UACount struct {
 }
 
 type AccessLog struct {
-	Timestamp    string `json:"timestamp"`
-	Method       string `json:"method"`
-	URL          string `json:"url"`
-	StatusCode   int    `json:"status_code"`
-	ResponseTime int64  `json:"response_time"`
-	RequestSize  int64  `json:"request_size"`
-	ResponseSize int64  `json:"response_size"`
-	UserAgent    string `json:"user_agent"`
+	Timestamp    string  `json:"timestamp"`
+	Method       string  `json:"method"`
+	URL          string  `json:"url"`
+	StatusCode   int     `json:"status_code"`
+	ResponseTime float64 `json:"response_time"`
+	RequestSize  int64   `json:"request_size"`
+	ResponseSize int64   `json:"response_size"`
+	UserAgent    string  `json:"user_agent"`
 }
 
 func DashboardHandler(w http.ResponseWriter, r *http.Request) {
+	if !requireAnalyticsAdmin(w, r) {
+		return
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+	defer cancel()
 	if r.Method != http.MethodGet {
 		logs.HTTPError(w, r, nil, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
-	period := r.URL.Query().Get("period")
-	if period == "" {
-		period = "24h"
-	}
-
-	var timeCondition string
-	switch period {
-	case "1h":
-		timeCondition = "timestamp >= datetime('now', '-1 hour')"
-	case "24h":
-		timeCondition = "timestamp >= datetime('now', '-1 day')"
-	case "7d":
-		timeCondition = "timestamp >= datetime('now', '-7 days')"
-	case "30d":
-		timeCondition = "timestamp >= datetime('now', '-30 days')"
-	default:
-		timeCondition = "timestamp >= datetime('now', '-1 day')"
-	}
+	timeCondition := dashboardCondition(r.URL.Query().Get("period"))
 
 	data := DashboardData{}
 
-	stats, err := getDashboardStats(timeCondition)
+	stats, err := getDashboardStats(ctx, timeCondition)
 	if err != nil {
 		logs.HTTPError(w, r, err, http.StatusInternalServerError, "Failed to get dashboard stats")
 		return
 	}
 	data.Stats = stats
 
-	topIPs, err := getTopIPs(timeCondition, 100)
+	topIPs, err := getTopIPs(ctx, timeCondition, 100)
 	if err != nil {
 		logs.HTTPError(w, r, err, http.StatusInternalServerError, "Failed to get top IPs")
 		return
 	}
 	data.TopIPs = topIPs
 
-	topRoutes, err := getTopRoutes(timeCondition, 100)
+	topRoutes, err := getTopRoutes(ctx, timeCondition, 100)
 	if err != nil {
 		logs.HTTPError(w, r, err, http.StatusInternalServerError, "Failed to get top routes")
 		return
 	}
 	data.TopRoutes = topRoutes
 
-	bot404s, err := getBot404s(timeCondition, 100)
+	bot404s, err := getBot404s(ctx, timeCondition, 100)
 	if err != nil {
 		logs.HTTPError(w, r, err, http.StatusInternalServerError, "Failed to get bot 404s")
 		return
 	}
 	data.Bot404s = bot404s
 
-	errorCodes, err := getErrorCodes(timeCondition)
+	errorCodes, err := getErrorCodes(ctx, timeCondition)
 	if err != nil {
 		logs.HTTPError(w, r, err, http.StatusInternalServerError, "Failed to get error codes")
 		return
 	}
 	data.ErrorCodes = errorCodes
 
-	userAgents, err := getTopUserAgents(timeCondition, 20)
+	userAgents, err := getTopUserAgents(ctx, timeCondition, 20)
 	if err != nil {
 		logs.HTTPError(w, r, err, http.StatusInternalServerError, "Failed to get user agents")
 		return
@@ -154,61 +145,36 @@ func DashboardHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(data)
 }
 
-func getDashboardStats(timeCondition string) (DashboardStats, error) {
+func getDashboardStats(ctx context.Context, timeCondition string) (DashboardStats, error) {
 	var stats DashboardStats
 
-	query := "SELECT COUNT(*) FROM access_logs WHERE " + timeCondition
-	err := db.DB.QueryRow(query).Scan(&stats.TotalRequests)
+	query := `SELECT COUNT(*), COUNT(DISTINCT client_ip),
+ COALESCE(100.0 * SUM(status_code >= 500) / NULLIF(COUNT(*), 0), 0),
+ COALESCE(AVG(response_time), 0) FROM access_logs WHERE ` + timeCondition
+	err := db.DB.QueryRowContext(ctx, query).Scan(&stats.TotalRequests, &stats.UniqueIPs, &stats.ErrorRate, &stats.AvgResponseTime)
 	if err != nil {
 		return stats, err
-	}
-
-	query = "SELECT COUNT(DISTINCT remote_addr) FROM access_logs WHERE " + timeCondition
-	err = db.DB.QueryRow(query).Scan(&stats.UniqueIPs)
-	if err != nil {
-		return stats, err
-	}
-
-	var errorCount int
-	query = "SELECT COUNT(*) FROM access_logs WHERE " + timeCondition + " AND status_code >= 400"
-	err = db.DB.QueryRow(query).Scan(&errorCount)
-	if err != nil {
-		return stats, err
-	}
-
-	if stats.TotalRequests > 0 {
-		stats.ErrorRate = (float64(errorCount) / float64(stats.TotalRequests)) * 100
-	}
-
-	query = "SELECT AVG(response_time) FROM access_logs WHERE " + timeCondition + " AND response_time > 0"
-	var avgTime sql.NullFloat64
-	err = db.DB.QueryRow(query).Scan(&avgTime)
-	if err != nil {
-		return stats, err
-	}
-	if avgTime.Valid {
-		stats.AvgResponseTime = avgTime.Float64
 	}
 
 	return stats, nil
 }
 
-func getTopIPs(timeCondition string, limit int) ([]IPCount, error) {
+func getTopIPs(ctx context.Context, timeCondition string, limit int) ([]IPCount, error) {
 	query := `
-		SELECT remote_addr, COUNT(*) as count
+		SELECT client_ip, COUNT(*) as count
 		FROM access_logs
 		WHERE ` + timeCondition + `
-		GROUP BY remote_addr
+		GROUP BY client_ip
 		ORDER BY count DESC
 		LIMIT ?`
 
-	rows, err := db.DB.Query(query, limit)
+	rows, err := db.DB.QueryContext(ctx, query, limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var results []IPCount
+	results := make([]IPCount, 0)
 	for rows.Next() {
 		var ip IPCount
 		err := rows.Scan(&ip.IP, &ip.Count)
@@ -218,25 +184,25 @@ func getTopIPs(timeCondition string, limit int) ([]IPCount, error) {
 		results = append(results, ip)
 	}
 
-	return results, nil
+	return results, rows.Err()
 }
 
-func getTopRoutes(timeCondition string, limit int) ([]RouteCount, error) {
+func getTopRoutes(ctx context.Context, timeCondition string, limit int) ([]RouteCount, error) {
 	query := `
-		SELECT url, COUNT(*) as count
+		SELECT ` + analyticsRoute + ` AS route, COUNT(*) as count
 		FROM access_logs
 		WHERE ` + timeCondition + `
-		GROUP BY url
+		GROUP BY route
 		ORDER BY count DESC
 		LIMIT ?`
 
-	rows, err := db.DB.Query(query, limit)
+	rows, err := db.DB.QueryContext(ctx, query, limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var results []RouteCount
+	results := make([]RouteCount, 0)
 	for rows.Next() {
 		var route RouteCount
 		err := rows.Scan(&route.URL, &route.Count)
@@ -246,26 +212,26 @@ func getTopRoutes(timeCondition string, limit int) ([]RouteCount, error) {
 		results = append(results, route)
 	}
 
-	return results, nil
+	return results, rows.Err()
 }
 
-func getBot404s(timeCondition string, limit int) ([]IPCount, error) {
+func getBot404s(ctx context.Context, timeCondition string, limit int) ([]IPCount, error) {
 	query := `
-		SELECT remote_addr, COUNT(*) as count
+		SELECT client_ip, COUNT(*) as count
 		FROM access_logs
 		WHERE ` + timeCondition + ` AND status_code = 404
-		GROUP BY remote_addr
+		GROUP BY client_ip
 		HAVING count >= 5
 		ORDER BY count DESC
 		LIMIT ?`
 
-	rows, err := db.DB.Query(query, limit)
+	rows, err := db.DB.QueryContext(ctx, query, limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var results []IPCount
+	results := make([]IPCount, 0)
 	for rows.Next() {
 		var ip IPCount
 		err := rows.Scan(&ip.IP, &ip.Count)
@@ -275,10 +241,10 @@ func getBot404s(timeCondition string, limit int) ([]IPCount, error) {
 		results = append(results, ip)
 	}
 
-	return results, nil
+	return results, rows.Err()
 }
 
-func getErrorCodes(timeCondition string) ([]StatusCount, error) {
+func getErrorCodes(ctx context.Context, timeCondition string) ([]StatusCount, error) {
 	query := `
 		SELECT status_code, COUNT(*) as count
 		FROM access_logs
@@ -286,13 +252,13 @@ func getErrorCodes(timeCondition string) ([]StatusCount, error) {
 		GROUP BY status_code
 		ORDER BY count DESC`
 
-	rows, err := db.DB.Query(query)
+	rows, err := db.DB.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var results []StatusCount
+	results := make([]StatusCount, 0)
 	for rows.Next() {
 		var status StatusCount
 		err := rows.Scan(&status.StatusCode, &status.Count)
@@ -302,10 +268,10 @@ func getErrorCodes(timeCondition string) ([]StatusCount, error) {
 		results = append(results, status)
 	}
 
-	return results, nil
+	return results, rows.Err()
 }
 
-func getTopUserAgents(timeCondition string, limit int) ([]UACount, error) {
+func getTopUserAgents(ctx context.Context, timeCondition string, limit int) ([]UACount, error) {
 	query := `
 		SELECT COALESCE(user_agent, 'Unknown') as user_agent, COUNT(*) as count
 		FROM access_logs
@@ -314,13 +280,13 @@ func getTopUserAgents(timeCondition string, limit int) ([]UACount, error) {
 		ORDER BY count DESC
 		LIMIT ?`
 
-	rows, err := db.DB.Query(query, limit)
+	rows, err := db.DB.QueryContext(ctx, query, limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var results []UACount
+	results := make([]UACount, 0)
 	for rows.Next() {
 		var ua UACount
 		err := rows.Scan(&ua.UserAgent, &ua.Count)
@@ -330,14 +296,22 @@ func getTopUserAgents(timeCondition string, limit int) ([]UACount, error) {
 		results = append(results, ua)
 	}
 
-	return results, nil
+	return results, rows.Err()
 }
 
 func DashboardPageHandler(w http.ResponseWriter, r *http.Request) {
+	if !requireAnalyticsAdmin(w, r) {
+		return
+	}
 	ServeTemplate(w, r, "dashboard.html", nil)
 }
 
 func IPAnalyticsHandler(w http.ResponseWriter, r *http.Request) {
+	if !requireAnalyticsAdmin(w, r) {
+		return
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+	defer cancel()
 	if r.Method != http.MethodGet {
 		logs.HTTPError(w, r, nil, http.StatusMethodNotAllowed, "Method not allowed")
 		return
@@ -355,63 +329,46 @@ func IPAnalyticsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	period := r.URL.Query().Get("period")
-	if period == "" {
-		period = "24h"
-	}
-
-	var timeCondition string
-	switch period {
-	case "1h":
-		timeCondition = "timestamp >= datetime('now', '-1 hour')"
-	case "24h":
-		timeCondition = "timestamp >= datetime('now', '-1 day')"
-	case "7d":
-		timeCondition = "timestamp >= datetime('now', '-7 days')"
-	case "30d":
-		timeCondition = "timestamp >= datetime('now', '-30 days')"
-	default:
-		timeCondition = "timestamp >= datetime('now', '-1 day')"
-	}
+	timeCondition := dashboardCondition(r.URL.Query().Get("period"))
 
 	data := IPAnalyticsData{}
 
-	stats, err := getIPStats(ip, timeCondition)
+	stats, err := getIPStats(ctx, ip, timeCondition)
 	if err != nil {
 		logs.HTTPError(w, r, err, http.StatusInternalServerError, "Failed to get IP stats")
 		return
 	}
 	data.Stats = stats
 
-	topRoutes, err := getIPTopRoutes(ip, timeCondition)
+	topRoutes, err := getIPTopRoutes(ctx, ip, timeCondition)
 	if err != nil {
 		logs.HTTPError(w, r, err, http.StatusInternalServerError, "Failed to get IP routes")
 		return
 	}
 	data.TopRoutes = topRoutes
 
-	statusCodes, err := getIPStatusCodes(ip, timeCondition)
+	statusCodes, err := getIPStatusCodes(ctx, ip, timeCondition)
 	if err != nil {
 		logs.HTTPError(w, r, err, http.StatusInternalServerError, "Failed to get IP status codes")
 		return
 	}
 	data.StatusCodes = statusCodes
 
-	hourlyActivity, err := getIPHourlyActivity(ip, timeCondition)
+	hourlyActivity, err := getIPHourlyActivity(ctx, ip, timeCondition)
 	if err != nil {
 		logs.HTTPError(w, r, err, http.StatusInternalServerError, "Failed to get IP hourly activity")
 		return
 	}
 	data.HourlyActivity = hourlyActivity
 
-	userAgents, err := getIPUserAgents(ip, timeCondition)
+	userAgents, err := getIPUserAgents(ctx, ip, timeCondition)
 	if err != nil {
 		logs.HTTPError(w, r, err, http.StatusInternalServerError, "Failed to get IP user agents")
 		return
 	}
 	data.UserAgents = userAgents
 
-	accessLogs, err := getIPAccessLogs(ip, timeCondition)
+	accessLogs, err := getIPAccessLogs(ctx, ip, timeCondition)
 	if err != nil {
 		logs.HTTPError(w, r, err, http.StatusInternalServerError, "Failed to get IP access logs")
 		return
@@ -424,6 +381,9 @@ func IPAnalyticsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func IPAnalyticsPageHandler(w http.ResponseWriter, r *http.Request) {
+	if !requireAnalyticsAdmin(w, r) {
+		return
+	}
 	path := r.URL.Path
 	if !strings.HasPrefix(path, "/dashboard/ip/") {
 		FourHundredHandler(w, r, 404)
@@ -445,40 +405,20 @@ func IPAnalyticsPageHandler(w http.ResponseWriter, r *http.Request) {
 	ServeTemplate(w, r, "ip_analytics.html", data)
 }
 
-func getIPStats(ip, timeCondition string) (IPStats, error) {
+func getIPStats(ctx context.Context, ip, timeCondition string) (IPStats, error) {
 	var stats IPStats
 
-	query := "SELECT COUNT(*) FROM access_logs WHERE remote_addr = ? AND " + timeCondition
-	err := db.DB.QueryRow(query, ip).Scan(&stats.TotalRequests)
+	query := `SELECT COUNT(*), COUNT(DISTINCT ` + analyticsRoute + `),
+ COALESCE(SUM(status_code >= 500), 0), COALESCE(AVG(response_time), 0)
+ FROM access_logs WHERE client_ip = ? AND ` + timeCondition
+	err := db.DB.QueryRowContext(ctx, query, ip).Scan(&stats.TotalRequests, &stats.UniqueRoutes, &stats.ErrorCount, &stats.AvgResponseTime)
 	if err != nil {
 		return stats, err
 	}
 
-	query = "SELECT COUNT(DISTINCT url) FROM access_logs WHERE remote_addr = ? AND " + timeCondition
-	err = db.DB.QueryRow(query, ip).Scan(&stats.UniqueRoutes)
-	if err != nil {
-		return stats, err
-	}
-
-	query = "SELECT COUNT(*) FROM access_logs WHERE remote_addr = ? AND " + timeCondition + " AND status_code >= 400"
-	err = db.DB.QueryRow(query, ip).Scan(&stats.ErrorCount)
-	if err != nil {
-		return stats, err
-	}
-
-	query = "SELECT AVG(response_time) FROM access_logs WHERE remote_addr = ? AND " + timeCondition + " AND response_time > 0"
-	var avgTime sql.NullFloat64
-	err = db.DB.QueryRow(query, ip).Scan(&avgTime)
-	if err != nil {
-		return stats, err
-	}
-	if avgTime.Valid {
-		stats.AvgResponseTime = avgTime.Float64
-	}
-
-	query = "SELECT MIN(timestamp), MAX(timestamp) FROM access_logs WHERE remote_addr = ?"
+	query = "SELECT MIN(timestamp), MAX(timestamp) FROM access_logs WHERE client_ip = ? AND " + analyticsTraffic
 	var firstSeen, lastSeen sql.NullString
-	err = db.DB.QueryRow(query, ip).Scan(&firstSeen, &lastSeen)
+	err = db.DB.QueryRowContext(ctx, query, ip).Scan(&firstSeen, &lastSeen)
 	if err != nil {
 		return stats, err
 	}
@@ -492,22 +432,22 @@ func getIPStats(ip, timeCondition string) (IPStats, error) {
 	return stats, nil
 }
 
-func getIPTopRoutes(ip, timeCondition string) ([]RouteCount, error) {
+func getIPTopRoutes(ctx context.Context, ip, timeCondition string) ([]RouteCount, error) {
 	query := `
-		SELECT url, COUNT(*) as count
+		SELECT ` + analyticsRoute + ` AS route, COUNT(*) as count
 		FROM access_logs
-		WHERE remote_addr = ? AND ` + timeCondition + `
-		GROUP BY url
+		WHERE client_ip = ? AND ` + timeCondition + `
+		GROUP BY route
 		ORDER BY count DESC
 		LIMIT 50`
 
-	rows, err := db.DB.Query(query, ip)
+	rows, err := db.DB.QueryContext(ctx, query, ip)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var results []RouteCount
+	results := make([]RouteCount, 0)
 	for rows.Next() {
 		var route RouteCount
 		err := rows.Scan(&route.URL, &route.Count)
@@ -517,24 +457,24 @@ func getIPTopRoutes(ip, timeCondition string) ([]RouteCount, error) {
 		results = append(results, route)
 	}
 
-	return results, nil
+	return results, rows.Err()
 }
 
-func getIPStatusCodes(ip, timeCondition string) ([]StatusCount, error) {
+func getIPStatusCodes(ctx context.Context, ip, timeCondition string) ([]StatusCount, error) {
 	query := `
 		SELECT status_code, COUNT(*) as count
 		FROM access_logs
-		WHERE remote_addr = ? AND ` + timeCondition + `
+		WHERE client_ip = ? AND ` + timeCondition + `
 		GROUP BY status_code
 		ORDER BY count DESC`
 
-	rows, err := db.DB.Query(query, ip)
+	rows, err := db.DB.QueryContext(ctx, query, ip)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var results []StatusCount
+	results := make([]StatusCount, 0)
 	for rows.Next() {
 		var status StatusCount
 		err := rows.Scan(&status.StatusCode, &status.Count)
@@ -544,24 +484,24 @@ func getIPStatusCodes(ip, timeCondition string) ([]StatusCount, error) {
 		results = append(results, status)
 	}
 
-	return results, nil
+	return results, rows.Err()
 }
 
-func getIPHourlyActivity(ip, timeCondition string) ([]HourCount, error) {
+func getIPHourlyActivity(ctx context.Context, ip, timeCondition string) ([]HourCount, error) {
 	query := `
 		SELECT strftime('%H', timestamp) as hour, COUNT(*) as count
 		FROM access_logs
-		WHERE remote_addr = ? AND ` + timeCondition + `
+		WHERE client_ip = ? AND ` + timeCondition + `
 		GROUP BY hour
 		ORDER BY hour`
 
-	rows, err := db.DB.Query(query, ip)
+	rows, err := db.DB.QueryContext(ctx, query, ip)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var results []HourCount
+	results := make([]HourCount, 0)
 	for rows.Next() {
 		var hourCount HourCount
 		var hourStr string
@@ -579,27 +519,27 @@ func getIPHourlyActivity(ip, timeCondition string) ([]HourCount, error) {
 		results = append(results, hourCount)
 	}
 
-	return results, nil
+	return results, rows.Err()
 }
 
-func getIPUserAgents(ip, timeCondition string) ([]UACount, error) {
+func getIPUserAgents(ctx context.Context, ip, timeCondition string) ([]UACount, error) {
 	query := `
 		SELECT
 			COALESCE(user_agent, 'Unknown') as user_agent,
 			COUNT(*) as count
 		FROM access_logs
-		WHERE remote_addr = ? AND ` + timeCondition + `
+		WHERE client_ip = ? AND ` + timeCondition + `
 		GROUP BY user_agent
 		ORDER BY count DESC
 		LIMIT 10`
 
-	rows, err := db.DB.Query(query, ip)
+	rows, err := db.DB.QueryContext(ctx, query, ip)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var results []UACount
+	results := make([]UACount, 0)
 	for rows.Next() {
 		var ua UACount
 		err := rows.Scan(&ua.UserAgent, &ua.Count)
@@ -609,25 +549,25 @@ func getIPUserAgents(ip, timeCondition string) ([]UACount, error) {
 		results = append(results, ua)
 	}
 
-	return results, nil
+	return results, rows.Err()
 }
 
-func getIPAccessLogs(ip, timeCondition string) ([]AccessLog, error) {
+func getIPAccessLogs(ctx context.Context, ip, timeCondition string) ([]AccessLog, error) {
 	query := `
 		SELECT timestamp, method, url, status_code, response_time,
 			   request_size, response_size, COALESCE(user_agent, 'Unknown') as user_agent
 		FROM access_logs
-		WHERE remote_addr = ? AND ` + timeCondition + `
+		WHERE client_ip = ? AND ` + timeCondition + `
 		ORDER BY timestamp DESC
 		LIMIT 100`
 
-	rows, err := db.DB.Query(query, ip)
+	rows, err := db.DB.QueryContext(ctx, query, ip)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var results []AccessLog
+	results := make([]AccessLog, 0)
 	for rows.Next() {
 		var log AccessLog
 		err := rows.Scan(&log.Timestamp, &log.Method, &log.URL, &log.StatusCode,
@@ -635,8 +575,9 @@ func getIPAccessLogs(ip, timeCondition string) ([]AccessLog, error) {
 		if err != nil {
 			return nil, err
 		}
+		log.URL = requestlog.Path(log.URL)
 		results = append(results, log)
 	}
 
-	return results, nil
+	return results, rows.Err()
 }

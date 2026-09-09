@@ -18,7 +18,7 @@ import (
 )
 
 const libraryAdminPath = "/admin/odir/"
-const libraryCookie = "cnqso_library"
+const libraryCookie = "cnqso_admin"
 const librarySessionLifetime = 12 * time.Hour
 
 type librarySession struct {
@@ -51,7 +51,7 @@ func libraryCookieSecure(r *http.Request) bool {
 }
 
 func setLibraryCookie(w http.ResponseWriter, r *http.Request, token string, age int) {
-	http.SetCookie(w, &http.Cookie{Name: libraryCookie, Value: token, Path: libraryAdminPath,
+	http.SetCookie(w, &http.Cookie{Name: libraryCookie, Value: token, Path: "/",
 		MaxAge: age, HttpOnly: true, Secure: libraryCookieSecure(r), SameSite: http.SameSiteStrictMode})
 }
 
@@ -84,7 +84,7 @@ func librarySameOrigin(r *http.Request) bool {
 
 func libraryLogin(w http.ResponseWriter, r *http.Request, hash []byte) {
 	if r.Method == http.MethodGet {
-		ServeTemplate(w, r, "library_login.html", struct{ Error string }{})
+		ServeTemplate(w, r, "library_login.html", loginData{Next: adminLoginTarget(r.URL.Query().Get("next"))})
 		return
 	}
 	if r.Method != http.MethodPost {
@@ -120,7 +120,7 @@ func libraryLogin(w http.ResponseWriter, r *http.Request, hash []byte) {
 	if len(password) > 72 || bcrypt.CompareHashAndPassword(hash, []byte(password)) != nil {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(http.StatusUnauthorized)
-		ServeTemplate(w, r, "library_login.html", struct{ Error string }{"Incorrect password."})
+		ServeTemplate(w, r, "library_login.html", loginData{Error: "Incorrect password.", Next: adminLoginTarget(r.PostForm.Get("next"))})
 		return
 	}
 	token := randomLibraryToken()
@@ -145,7 +145,7 @@ func libraryLogin(w http.ResponseWriter, r *http.Request, hash []byte) {
 	libraryAuth.Sessions[token] = session
 	libraryAuth.Unlock()
 	setLibraryCookie(w, r, token, int(librarySessionLifetime.Seconds()))
-	http.Redirect(w, r, libraryAdminPath, http.StatusSeeOther)
+	http.Redirect(w, r, adminLoginTarget(r.PostForm.Get("next")), http.StatusSeeOther)
 }
 
 func LibraryAdminHandler(w http.ResponseWriter, r *http.Request) {

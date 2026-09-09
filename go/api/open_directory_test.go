@@ -185,7 +185,7 @@ func TestLibraryAuthentication(t *testing.T) {
 		t.Fatal("private download did not require login")
 	}
 	cookie, csrf := loginLibrary(t)
-	if !cookie.HttpOnly || cookie.SameSite != http.SameSiteStrictMode || cookie.Path != libraryAdminPath {
+	if !cookie.HttpOnly || cookie.SameSite != http.SameSiteStrictMode || cookie.Path != "/" {
 		t.Fatal("incorrect cookie policy")
 	}
 	r := libraryRequest("GET", libraryAdminPath+"browse/private.epub", nil)

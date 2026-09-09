@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{.Label}} — journey</title><link rel="stylesheet" href="/static/css/open-directory.css?v=20260909-2"></head>
+<body><main><p><a href="/dashboard/journeys">visitor journeys</a> / <a href="/dashboard">dashboard</a></p><h1>{{.Label}}</h1>
+{{if .Fingerprinting}}<details class="fingerprint-matches"><summary>Experimental fingerprint · {{len .Matches}} possible matches</summary>
+<p>Same reported browser settings in the last 24 hours. Different people can match; one person can stop matching. These journeys remain separate.</p>
+{{if .Signatures}}<p>Recent signatures:</p><ul>{{range .Signatures}}<li><code>{{.}}</code></li>{{end}}</ul>{{else}}<p>No recent fingerprint. Collection starts with this update and respects GPC / Do Not Track.</p>{{end}}
+<ul>{{range .Matches}}<li><a href="/dashboard/journey/{{.ID}}">{{.Label}}</a> · {{.Shared}} shared signature(s)</li>{{else}}<li>No other matching browser labels in this window.</li>{{end}}</ul>
+<p>Uses browser/version, language preferences, and browser hints. Signatures rotate daily and on restart. No device probes or additional JavaScript.</p></details>{{end}}
+<p>{{if .Raw}}Raw requests · <a href="/dashboard/journey/{{.ID}}">pages and downloads</a>{{else}}Pages and downloads · <a href="/dashboard/journey/{{.ID}}?raw=1">show raw requests</a>{{end}}</p>
+<p>Oldest to newest on each page. A new visit starts after 30 minutes of inactivity. A visit can continue on an older page. Downloads show requests, not proof that a file was saved or read.</p>
+{{range .Visits}}<section><h2>Visit · {{.Start}}</h2><ol style="overflow-wrap:anywhere">{{range .Events}}<li><p><time>{{.Time}}</time> · {{if .Kind}}{{.Kind}}{{else}}request{{end}} · {{.Method}} {{.URL}} · {{.Status}}{{if gt .Repeat 1}} · {{.Repeat}} file requests{{end}}</p>{{if .Referrer}}<p>From {{.Referrer}}</p>{{end}}</li>{{end}}</ol></section>{{else}}<p>No requests in this view.</p>{{end}}
+{{if .Older}}<p><a href="{{.Older}}">older requests</a></p>{{end}}</main></body></html>

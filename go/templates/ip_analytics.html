@@ -264,7 +264,7 @@
                 </div>
                 <div class="stat-box error-stat">
                     <div class="stat-number" id="errorCount">-</div>
-                    <div class="stat-label">Errors (4xx/5xx)</div>
+                    <div class="stat-label">Server Errors (5xx)</div>
                 </div>
                 <div class="stat-box">
                     <div class="stat-number" id="avgResponseTime">-</div>
@@ -352,6 +352,7 @@
                     const response = await fetch(
                         `/api/dashboard/ip/${encodeURIComponent(IP)}?period=${timePeriod}`,
                     );
+                    if (response.status === 401) { window.location.href = "/admin/odir/login?next=" + encodeURIComponent(window.location.pathname); return; }
                     if (!response.ok) {
                         throw new Error(
                             `HTTP error! status: ${response.status}`,
@@ -373,7 +374,7 @@
                 document.getElementById("errorCount").textContent =
                     data.stats.errorCount.toLocaleString();
                 document.getElementById("avgResponseTime").textContent =
-                    Math.round(data.stats.avgResponseTime);
+                    data.stats.avgResponseTime.toFixed(2);
                 document.getElementById("firstSeen").textContent =
                     formatDateTime(data.stats.firstSeen);
                 document.getElementById("lastSeen").textContent =
@@ -442,7 +443,7 @@
                             <td>${escapeHTML(log.method || "-")}</td>
                             <td title="${escapeHTML(log.url)}">${escapeHTML(truncate(log.url, 40))}</td>
                             <td class="${statusClass}">${log.status_code || "-"}</td>
-                            <td>${log.response_time || "-"}ms</td>
+                            <td>${Number(log.response_time).toFixed(2)}ms</td>
                             <td>${formatBytes(log.request_size)}</td>
                             <td>${formatBytes(log.response_size)}</td>
                             <td title="${escapeHTML(log.user_agent)}">${escapeHTML(truncate(log.user_agent, 30))}</td>
@@ -488,7 +489,7 @@
             }
 
             function formatBytes(bytes) {
-                if (!bytes || bytes === 0) return "-";
+                if (bytes == null || bytes <= 0) return "-";
                 const sizes = ["B", "KB", "MB", "GB"];
                 const i = Math.floor(Math.log(bytes) / Math.log(1024));
                 return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + sizes[i];

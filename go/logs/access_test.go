@@ -15,7 +15,7 @@ func TestPrivateLibraryPathsAreRedactedFromAnalytics(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { db.DB.Close(); db.DB = original })
-	_, err = db.DB.Exec("CREATE TABLE access_logs (timestamp,method,url,status_code,response_time,remote_addr,request_size,response_size,user_agent,data)")
+	_, err = db.DB.Exec("CREATE TABLE access_logs (timestamp,method,url,status_code,response_time,remote_addr,client_ip,request_size,response_size,user_agent,data,visitor_id,event_kind,referrer,fingerprint)")
 	if err != nil {
 		t.Fatal(err)
 	}

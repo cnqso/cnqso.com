@@ -1,12 +1,18 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"net/http"
+	"os/signal"
 	"server/api"
 	"server/config"
 	"server/core"
+	"server/db"
 	"server/logs"
 	"server/types"
+	"syscall"
+	"time"
 )
 
 var routes = []types.Route{
@@ -25,6 +31,8 @@ var routes = []types.Route{
 	{Path: "/admin/odir/", Handler: api.LibraryAdminHandler},
 
 	{Path: "/dashboard", Handler: api.DashboardPageHandler},
+	{Path: "/dashboard/journeys", Handler: api.JourneysHandler},
+	{Path: "/dashboard/journey/", Handler: api.JourneyHandler},
 	{Path: "/api/dashboard", Handler: api.DashboardHandler},
 	{Path: "/dashboard/ip/", Handler: api.IPAnalyticsPageHandler},
 	{Path: "/api/dashboard/ip/", Handler: api.IPAnalyticsHandler},
@@ -41,6 +49,9 @@ var routes = []types.Route{
 
 func main() {
 	core.Init()
+	defer db.DB.Close()
+	defer db.LogDB.Close()
+	defer logs.StopWriter()
 
 	for _, route := range routes {
 		http.HandleFunc(route.Path, logs.Handler(route.Handler))
@@ -48,7 +59,21 @@ func main() {
 
 	logs.INFO("Starting server", map[string]any{"port": config.Port})
 
-	if err := http.ListenAndServe(config.Port, nil); err != nil {
-		logs.ERROR("Server failed to start", map[string]any{"error": err.Error()})
+	server := &http.Server{Addr: config.Port, ReadHeaderTimeout: 10 * time.Second, IdleTimeout: 60 * time.Second}
+	stop, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+	finished := make(chan error, 1)
+	go func() { finished <- server.ListenAndServe() }()
+	select {
+	case err := <-finished:
+		if !errors.Is(err, http.ErrServerClosed) {
+			logs.ERROR("Server stopped", map[string]any{"error": err.Error()})
+		}
+	case <-stop.Done():
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := server.Shutdown(ctx); err != nil {
+			server.Close()
+		}
 	}
 }

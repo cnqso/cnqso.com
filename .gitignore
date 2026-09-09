@@ -4,7 +4,7 @@
 /webm/
 /wordle-data/
 /go/server
-/go/db/*.db
+/go/db/*.db*
 /go/odir/
 /go/static/js/*
 /go/static/petrarchive/*

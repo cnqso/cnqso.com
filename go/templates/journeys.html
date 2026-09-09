@@ -1,0 +1,7 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Visitor journeys</title><link rel="stylesheet" href="/static/css/open-directory.css?v=20260909-2"></head>
+<body><main><p><a href="/dashboard">dashboard</a> / <a href="/admin/odir/">library admin</a></p>
+<h1>Visitor journeys</h1><p>Last 30 days. Each browser is a separate browser label, not a verified person. Journeys begin with this update.</p>
+<p>Open a browser to inspect experimental fingerprint matches. Matches are hints, not verified identities.</p>
+<ul class="directory">{{range .Visitors}}<li><a href="/dashboard/journey/{{.ID}}">{{.Label}}</a><span>{{.Pages}} page requests / {{.Downloads}} download requests · {{.LastSeen}}</span></li>{{else}}<li>No journeys recorded yet.</li>{{end}}</ul>
+{{if .Older}}<p><a href="{{.Older}}">older browsers</a></p>{{end}}</main></body></html>

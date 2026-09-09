@@ -11,7 +11,11 @@ services:
       - CNQSO_UPLOAD_DIR=/app/uploads
       - CNQSO_LIBRARY_DIR=/app/files
       - CNQSO_COMPILE_TYPESCRIPT=false
+      - CNQSO_FINGERPRINTING=${CNQSO_FINGERPRINTING:-true}
+      # Nginx reaches the container through Docker's bridge gateway.
+      - CNQSO_TRUSTED_PROXIES=${CNQSO_TRUSTED_PROXIES:-127.0.0.1/32,::1/128,172.16.0.0/12}
     restart: unless-stopped
+    stop_grace_period: 30s
 
     deploy:
       resources:
