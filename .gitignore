@@ -13,4 +13,5 @@
 /go/static/petrarchive/*
 /go/static/react/*
 /submodules/*/dist/
+/submodules/*/.gitignore
 /submodules/*/node_modules/
