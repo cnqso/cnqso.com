@@ -4,6 +4,7 @@ import "os"
 
 var Port = env("CNQSO_PORT", ":1738")
 var UploadDir = env("CNQSO_UPLOAD_DIR", "/app/uploads")
+var OpenDirectoryDir = env("CNQSO_ODIR_DIR", "odir")
 var CompileTypeScript = env("CNQSO_COMPILE_TYPESCRIPT", "true") == "true"
 var TypeScriptCompiler = "tsgo" // "tsgo" is technically in preview. "tsc" works but is slow.
 

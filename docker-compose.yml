@@ -9,6 +9,7 @@ services:
     environment:
       - CNQSO_PORT=:1738
       - CNQSO_UPLOAD_DIR=/app/uploads
+      - CNQSO_ODIR_DIR=/app/odir
       - CNQSO_COMPILE_TYPESCRIPT=false
     restart: unless-stopped
 
@@ -31,6 +32,7 @@ services:
     volumes:
       - ./webm:/app/uploads
       - ./go/db:/app/db
+      - ./go/odir:/app/odir:ro
 
     tmpfs:
       - /tmp

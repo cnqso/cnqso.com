@@ -6,3 +6,4 @@ build-errors.log
 .air.toml
 .git/
 node_modules/
+odir/

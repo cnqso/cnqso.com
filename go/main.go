@@ -21,6 +21,7 @@ var routes = []types.Route{
 	{Path: "/piano-flashcards", Handler: api.PianoFlashcardsHandler},
 	{Path: "/bloonsbench/", Handler: api.BloonsBenchHandler},
 	{Path: "/esotericbench/", Handler: api.EsotericBenchHandler},
+	{Path: "/odir/", Handler: api.OpenDirectoryHandler},
 
 	{Path: "/dashboard", Handler: api.DashboardPageHandler},
 	{Path: "/api/dashboard", Handler: api.DashboardHandler},

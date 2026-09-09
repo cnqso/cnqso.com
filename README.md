@@ -30,6 +30,17 @@ journalctl -u cnqso-web-deploy.service -f
 sudo systemctl start cnqso-web-deploy.service
 ```
 
+ODIR documents are runtime content, not Git history. They live in the ignored
+`go/odir/` directory, which Docker mounts read-only. Sync that directory to a
+server before or after deployment:
+
+```sh
+rsync -av --delete go/odir/ asendio:~/cnqso-web/go/odir/
+```
+
+The papers page reads the directory at request time, so document changes do not
+require a rebuild.
+
 
 
 

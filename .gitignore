@@ -5,6 +5,7 @@
 /wordle-data/
 /go/server
 /go/db/*.db
+/go/odir/
 /go/static/audio/*
 /go/static/fonts/*
 /go/static/images/*

@@ -1,0 +1,65 @@
+@font-face {
+    font-family: "Perfect DOS VGA";
+    src: url("/odir/FSEX300.ttf") format("truetype");
+    font-display: swap;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    background: #000;
+    color-scheme: dark;
+    -webkit-font-smoothing: none;
+}
+
+body {
+    width: min(90%, 1000px);
+    margin: 0 auto;
+    background: #000;
+    color: #fff;
+    font-family: "Perfect DOS VGA", monospace;
+    font-size: 1rem;
+    line-height: 1.4;
+}
+
+main {
+    padding: 1rem 0 3rem;
+}
+
+.path {
+    color: #f37aed;
+}
+
+a {
+    color: #46eeff;
+}
+
+a:focus-visible {
+    outline: 2px solid #f37aed;
+    outline-offset: 3px;
+}
+
+.directory {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.directory li {
+    margin: 0 0 0.8rem;
+}
+
+::selection {
+    background: #46eeff;
+    color: #000;
+}
+
+@media (max-width: 600px) {
+    body {
+        width: auto;
+        margin: 0 1rem;
+        font-size: 1.25rem;
+    }
+}
