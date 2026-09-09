@@ -223,7 +223,7 @@ func libraryBrowse(w http.ResponseWriter, r *http.Request, admin bool, relative,
 		if a.IsDir != b.IsDir {
 			return a.IsDir
 		}
-		if strings.ToLower(a.Name) == strings.ToLower(b.Name) {
+		if strings.EqualFold(a.Name, b.Name) {
 			return a.Name < b.Name
 		}
 		return strings.ToLower(a.Name) < strings.ToLower(b.Name)
