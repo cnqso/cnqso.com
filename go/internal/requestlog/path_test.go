@@ -4,6 +4,11 @@ import "testing"
 
 func TestPath(t *testing.T) {
 	for raw, want := range map[string]string{
+		"/Admin/config.php?password=secret":                "/admin/",
+		"/admin/../public":                                 "/admin/",
+		"/dashboard/../../public":                          "/dashboard",
+		"/api/dashboard/../../public":                      "/api/dashboard",
+		"/public/../admin/odir/private.epub":               "/admin/odir/",
 		"/book?token=secret#section":                       "/book",
 		"https://user:password@example.test/book?q=secret": "/book",
 		"/odir/papers/A%20Book.pdf":                        "/odir/papers/A%20Book.pdf",

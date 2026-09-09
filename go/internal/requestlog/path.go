@@ -17,16 +17,20 @@ func Path(raw string) string {
 	if err != nil {
 		return "[redacted]"
 	}
-	p := path.Clean(u.Path)
-	switch {
-	case p == "/admin/odir" || strings.HasPrefix(p, "/admin/odir/"):
-		return "/admin/odir/"
-	case p == "/admin" || strings.HasPrefix(p, "/admin/"):
-		return "/admin/"
-	case p == "/dashboard" || strings.HasPrefix(p, "/dashboard/"):
-		return "/dashboard"
-	case p == "/api/dashboard" || strings.HasPrefix(p, "/api/dashboard/"):
-		return "/api/dashboard"
+	// Historical scanner requests can contain traversal segments. Redact both
+	// the requested private prefix and a private destination after normalization.
+	for _, p := range []string{u.Path, path.Clean(u.Path)} {
+		p = strings.ToLower(p)
+		switch {
+		case p == "/admin/odir" || strings.HasPrefix(p, "/admin/odir/"):
+			return "/admin/odir/"
+		case p == "/admin" || strings.HasPrefix(p, "/admin/"):
+			return "/admin/"
+		case p == "/dashboard" || strings.HasPrefix(p, "/dashboard/"):
+			return "/dashboard"
+		case p == "/api/dashboard" || strings.HasPrefix(p, "/api/dashboard/"):
+			return "/api/dashboard"
+		}
 	}
 	if u.Path == "" {
 		return "/"
