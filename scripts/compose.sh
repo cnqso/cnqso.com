@@ -13,13 +13,17 @@ cd "$repo_dir"
 
 case "$action" in
     up)
-        exec docker compose up -d --build
+        "$repo_dir/scripts/prepare-data.sh"
+        exec docker compose up -d --build --force-recreate web
+        ;;
+    recover)
+        exec docker compose up -d --no-build --force-recreate web
         ;;
     down)
         exec docker compose down
         ;;
     *)
-        echo "Usage: $0 {up|down}" >&2
+        echo "Usage: $0 {up|recover|down}" >&2
         exit 2
         ;;
 esac

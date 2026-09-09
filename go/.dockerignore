@@ -1,9 +1,0 @@
-server
-tmp/
-build-errors.log
-*.test
-*.out
-.air.toml
-.git/
-node_modules/
-odir/

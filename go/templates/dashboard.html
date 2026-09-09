@@ -178,6 +178,12 @@
         </div>
 
         <script>
+            function escapeHTML(value) {
+                return String(value ?? "").replace(/[&<>"']/g, char => ({
+                    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+                })[char]);
+            }
+
             async function fetchDashboardData() {
                 const timePeriod = document.getElementById("timePeriod").value;
 
@@ -268,12 +274,12 @@
                         const errorClass = isError ? "error-metric" : "";
                         const clickableClass = clickableIPs ? "clickable" : "";
                         const onClick = clickableIPs
-                            ? `onclick="window.location.href='/dashboard/ip/${encodeURIComponent(formatted.label)}'"`
+                            ? `onclick="window.location.href='/dashboard/ip/${encodeURIComponent(formatted.label).replace(/\x27/g, "%27")}'"`
                             : "";
                         return `
                     <div class="metric-item ${errorClass}">
-                        <div class="metric-label ${clickableClass}" title="${formatted.label}" ${onClick}>${formatted.label}</div>
-                        <div class="metric-value">${formatted.value}</div>
+                        <div class="metric-label ${clickableClass}" title="${escapeHTML(formatted.label)}" ${onClick}>${escapeHTML(formatted.label)}</div>
+                        <div class="metric-value">${escapeHTML(formatted.value)}</div>
                     </div>
                 `;
                     })

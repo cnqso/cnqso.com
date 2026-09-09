@@ -1,15 +1,15 @@
 services:
   web:
     build:
-      context: ./go
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: go/Dockerfile
     container_name: cnqso-web-server
     ports:
       - "127.0.0.1:1739:1738"
     environment:
       - CNQSO_PORT=:1738
       - CNQSO_UPLOAD_DIR=/app/uploads
-      - CNQSO_ODIR_DIR=/app/odir
+      - CNQSO_LIBRARY_DIR=/app/files
       - CNQSO_COMPILE_TYPESCRIPT=false
     restart: unless-stopped
 
@@ -32,7 +32,7 @@ services:
     volumes:
       - ./webm:/app/uploads
       - ./go/db:/app/db
-      - ./go/odir:/app/odir:ro
+      - ./go/files:/app/files
 
     tmpfs:
       - /tmp

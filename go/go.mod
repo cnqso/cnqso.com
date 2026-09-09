@@ -1,8 +1,6 @@
 module server
 
-go 1.23.0
-
-toolchain go1.24.6
+go 1.25.0
 
 require (
 	github.com/alecthomas/chroma/v2 v2.2.0
@@ -12,6 +10,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/yuin/goldmark v1.7.13
 	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20230729083705-37449abec8cc
+	golang.org/x/crypto v0.43.0
 	golang.org/x/image v0.30.0
 )
 
@@ -28,8 +27,8 @@ require (
 	github.com/kennygrant/sanitize v1.2.4 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
 	github.com/temoto/robotstxt v1.1.2 // indirect
-	golang.org/x/net v0.43.0 // indirect
-	golang.org/x/text v0.28.0 // indirect
+	golang.org/x/net v0.45.0 // indirect
+	golang.org/x/text v0.30.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/protobuf v1.36.8 // indirect
 )

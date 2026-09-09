@@ -1,6 +1,6 @@
 @font-face {
     font-family: "Perfect DOS VGA";
-    src: url("/odir/FSEX300.ttf") format("truetype");
+    src: url("/static/fonts/FSEX300.ttf") format("truetype");
     font-display: swap;
 }
 
@@ -62,4 +62,34 @@ a:focus-visible {
         margin: 0 1rem;
         font-size: 1.25rem;
     }
+}
+
+.library-header { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+.library-header form { margin: 0; }
+.library-header .path { overflow-wrap: anywhere; }
+.breadcrumbs { margin: 1.5rem 0 0.75rem; overflow-wrap: anywhere; }
+.breadcrumbs span:last-child { display: none; }
+.file-meta, .empty { color: #aaa; }
+.directory li { display: flex; gap: 1rem; justify-content: space-between; align-items: baseline; }
+.directory a { overflow-wrap: anywhere; min-width: 0; }
+.file-meta { flex-shrink: 0; font-size: 0.9em; }
+.library-tools { margin: 1rem 0; }
+details { padding: 0.4rem 0; }
+summary { cursor: pointer; color: #46eeff; }
+form { margin: 0.5rem 0; }
+label { display: block; margin: 0.5rem 0 0.2rem; }
+input, select, button { font: 13px monospace; color-scheme: light; max-width: 100%; }
+button { cursor: pointer; }
+input:focus-visible, select:focus-visible, button:focus-visible, summary:focus-visible { outline: 1px dotted #fff; outline-offset: 3px; }
+.logout { float: right; margin: 0; }
+.login-form { display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem; }
+.admin-login { margin-top: 2rem; font-size: 0.85em; }
+.admin-login summary { color: #888; }
+.notice { color: #9de0b0; }
+.error { color: #ffaaaa; }
+.footer-link { margin-top: 2rem; }
+.login { margin: 0; }
+@media (max-width: 600px) {
+    .file-meta { font-size: 0.75em; }
+    .library-header { flex-wrap: wrap; gap: 0.25rem; }
 }

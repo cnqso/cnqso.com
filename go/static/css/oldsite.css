@@ -78,7 +78,7 @@ h4 {
 header {
     width: 100%;
     height: 110px;
-    background-image: url("babytron.png");
+    background-image: url("../images/babytron.png");
     background-repeat: repeat-x;
     opacity: 2;
     transition: opacity 1200ms ease;

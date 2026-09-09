@@ -33,9 +33,25 @@ if [[ "$(git_repo branch --show-current)" != "$branch" ]]; then
     exit 1
 fi
 
-if [[ -n "$(git_repo status --porcelain --untracked-files=no)" ]]; then
+if ! git_repo diff --cached --quiet --ignore-submodules=none || [[ -n "$(git_repo status --porcelain --untracked-files=no --ignore-submodules=all)" ]]; then
     echo "Refusing to deploy: tracked files in $repo_dir have local changes." >&2
     exit 1
+fi
+
+# A moved gitlink is expected after a partially completed update. Protect edits
+# within initialized submodules separately, then reconcile their pinned revisions.
+# shellcheck disable=SC2016 # Git evaluates this script inside each submodule.
+git_repo submodule foreach --quiet --recursive '
+    if ! git diff --cached --quiet --ignore-submodules=none || test -n "$(git status --porcelain --untracked-files=no --ignore-submodules=all)"; then
+        echo "Refusing to deploy: local changes in submodule $displaypath." >&2
+        exit 1
+    fi
+'
+
+# Recover the existing image even if GitHub happens to be unreachable.
+if ! curl --fail --silent --max-time 10 "$health_url" >/dev/null &&
+   [[ -f "$state_dir/deployed-revision" ]]; then
+    "$repo_dir/scripts/compose.sh" recover
 fi
 
 git_repo fetch --quiet "$remote" "$branch"
@@ -49,9 +65,11 @@ if [[ "$local_revision" != "$remote_revision" ]]; then
     fi
 
     echo "Updating ${local_revision:0:8} -> ${remote_revision:0:8}"
-    git_repo pull --ff-only --no-recurse-submodules "$remote" "$branch"
-    git_repo submodule update --init --recursive
+    git_repo -c submodule.recurse=false merge --ff-only "$remote_revision"
 fi
+
+git_repo submodule sync --recursive
+git_repo submodule update --init --recursive
 
 revision="$(git_repo rev-parse HEAD)"
 deployed_revision="$(cat "$state_dir/deployed-revision" 2>/dev/null || true)"

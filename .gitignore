@@ -6,12 +6,13 @@
 /go/server
 /go/db/*.db
 /go/odir/
-/go/static/audio/*
-/go/static/fonts/*
-/go/static/images/*
 /go/static/js/*
 /go/static/petrarchive/*
 /go/static/react/*
 /submodules/*/dist/
 /submodules/*/.gitignore
 /submodules/*/node_modules/
+/go/files/
+/node_modules/
+/.env
+__pycache__/

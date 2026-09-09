@@ -22,6 +22,7 @@ var routes = []types.Route{
 	{Path: "/bloonsbench/", Handler: api.BloonsBenchHandler},
 	{Path: "/esotericbench/", Handler: api.EsotericBenchHandler},
 	{Path: "/odir/", Handler: api.OpenDirectoryHandler},
+	{Path: "/admin/odir/", Handler: api.LibraryAdminHandler},
 
 	{Path: "/dashboard", Handler: api.DashboardPageHandler},
 	{Path: "/api/dashboard", Handler: api.DashboardHandler},
@@ -31,8 +32,6 @@ var routes = []types.Route{
 	{Path: "/petrarchive/", Handler: api.ArchiveHandler},
 	{Path: "/hexagons", Handler: api.HexagonsHandler},
 	{Path: "/l8", Handler: api.L8Handler},
-	{Path: "/ebwg/", Handler: api.EBWGHandler},
-	{Path: "/api/ebwg/", Handler: api.EBWGAPIHandler},
 	{Path: "/favicon.ico/", Handler: api.FaviconHandler},
 	{Path: "/robots.txt", Handler: api.RobotsHandler},
 	// {Path: "/sitemap.xml", Handler: api.SitemapHandler},

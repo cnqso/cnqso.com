@@ -90,10 +90,11 @@ func initTemplates() error {
 }
 
 func processPostContent(content, currentThreadID string) template.HTML {
-	re := regexp.MustCompile(`>>\d+`)
+	content = template.HTMLEscapeString(content)
+	re := regexp.MustCompile(`&gt;&gt;\d+`)
 
 	processed := re.ReplaceAllStringFunc(content, func(match string) string {
-		postID := strings.TrimPrefix(match, ">>")
+		postID := strings.TrimPrefix(match, "&gt;&gt;")
 
 		var referencedThreadID string
 		err := db.DB.QueryRow("SELECT thread FROM posts WHERE id = ?", postID).Scan(&referencedThreadID)
@@ -190,7 +191,7 @@ func compileTypeScript() {
 
 	rootDir := cwd + "/.."
 
-	cmd := exec.Command("npx", config.TypeScriptCompiler)
+	cmd := exec.Command("npx", "--no-install", config.TypeScriptCompiler)
 	cmd.Dir = rootDir
 
 	output, err := cmd.CombinedOutput()

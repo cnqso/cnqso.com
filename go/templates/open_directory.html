@@ -1,15 +1,74 @@
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>/Public/OpenDirectory</title>
-        <link rel="stylesheet" href="/static/css/open-directory.css" />
-    </head>
-    <body>
-        <main>
-            <p class="path">CNQSO.COM/Public/OpenDirectory/</p>
-            <p><a href="/odir/papers/">Papers/</a></p>
-        </main>
-    </body>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{.Label}} — CNQSO Library</title>
+    <link rel="stylesheet" href="/static/css/open-directory.css?v=20260909-2" />
+</head>
+<body>
+<main>
+    {{if .Admin}}
+    <form class="logout" action="/admin/odir/logout" method="post">
+        <input type="hidden" name="csrf" value="{{.CSRF}}" />
+        <button type="submit">logout</button>
+    </form>
+    {{else}}
+    <header class="library-header">
+        <p class="path">CNQSO.COM / Public / OpenDirectory</p>
+        <a href="/">Home</a>
+    </header>
+    {{end}}
+    <nav class="breadcrumbs" aria-label="Folder path">
+        {{range .Breadcrumbs}}<a href="{{.URL}}">{{.Label}}</a><span aria-hidden="true"> / </span>{{end}}
+    </nav>
+    {{if .Message}}<p class="notice" role="status">{{.Message}}</p>{{end}}
+    {{if .Admin}}
+    <div class="library-tools">
+        <details>
+            <summary>Upload a file</summary>
+            <form action="/admin/odir/upload" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="csrf" value="{{.CSRF}}" />
+                <label for="destination">Save to</label>
+                <select id="destination" name="destination">
+                    {{range .Destinations}}<option value="{{.Path}}" {{if .Selected}}selected{{end}}>{{.Label}}</option>{{end}}
+                </select>
+                <label for="file">File (100 MB max)</label>
+                <input id="file" type="file" name="file" required />
+                <button type="submit">Upload</button>
+            </form>
+        </details>
+        <details>
+            <summary>New folder</summary>
+            <form action="/admin/odir/mkdir" method="post">
+                <input type="hidden" name="csrf" value="{{.CSRF}}" />
+                <input type="hidden" name="parent" value="{{.Path}}" />
+                <label for="folder-name">Folder name</label>
+                <input id="folder-name" name="name" type="text" required maxlength="255" />
+                <button type="submit">Create folder</button>
+            </form>
+        </details>
+    </div>
+    {{end}}
+    <ul class="directory">
+        {{range .Entries}}
+        <li>
+            <a href="{{.URL}}">{{.Name}}{{if .IsDir}}/{{end}}</a>
+            <span class="file-meta">{{if .IsDir}}{{if $.Admin}}{{if .Public}}public{{else}}private{{end}}{{end}}{{else}}{{.Size}}{{end}}</span>
+        </li>
+        {{else}}<li class="empty">This folder is empty.</li>{{end}}
+    </ul>
+    {{if .Admin}}
+    <p class="footer-link"><a href="/odir/">public directory</a></p>
+    {{else}}
+    <details class="admin-login">
+        <summary>admin login</summary>
+        <form class="login-form" action="/admin/odir/login" method="post">
+            <input name="password" type="password" aria-label="Password" autocomplete="current-password" required maxlength="72" />
+            <button type="submit">login</button>
+        </form>
+    </details>
+    {{end}}
+</main>
+</body>
 </html>

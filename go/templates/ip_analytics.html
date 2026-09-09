@@ -337,6 +337,12 @@
         </div>
 
         <script>
+            function escapeHTML(value) {
+                return String(value ?? "").replace(/[&<>"']/g, char => ({
+                    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+                })[char]);
+            }
+
             const IP = "{{.IP}}";
 
             async function fetchIPAnalytics() {
@@ -409,8 +415,8 @@
                         const formatted = formatter(item);
                         return `
                         <div class="metric-item">
-                            <div class="metric-label" title="${formatted.label}">${formatted.label}</div>
-                            <div class="metric-value">${formatted.value}</div>
+                            <div class="metric-label" title="${escapeHTML(formatted.label)}">${escapeHTML(formatted.label)}</div>
+                            <div class="metric-value">${escapeHTML(formatted.value)}</div>
                         </div>
                     `;
                     })
@@ -433,13 +439,13 @@
                         return `
                         <tr>
                             <td>${formatDateTime(log.timestamp)}</td>
-                            <td>${log.method || "-"}</td>
-                            <td title="${log.url}">${truncate(log.url, 40)}</td>
+                            <td>${escapeHTML(log.method || "-")}</td>
+                            <td title="${escapeHTML(log.url)}">${escapeHTML(truncate(log.url, 40))}</td>
                             <td class="${statusClass}">${log.status_code || "-"}</td>
                             <td>${log.response_time || "-"}ms</td>
                             <td>${formatBytes(log.request_size)}</td>
                             <td>${formatBytes(log.response_size)}</td>
-                            <td title="${log.user_agent}">${truncate(log.user_agent, 30)}</td>
+                            <td title="${escapeHTML(log.user_agent)}">${escapeHTML(truncate(log.user_agent, 30))}</td>
                         </tr>
                     `;
                     })

@@ -2,6 +2,7 @@ package logs
 
 import (
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -10,6 +11,9 @@ type responseCapture struct {
 	statusCode   int
 	responseSize int64
 }
+
+// Unwrap preserves ResponseController support, including upload read deadlines.
+func (rc *responseCapture) Unwrap() http.ResponseWriter { return rc.ResponseWriter }
 
 func (rc *responseCapture) WriteHeader(code int) {
 	rc.statusCode = code
@@ -23,12 +27,17 @@ func (rc *responseCapture) Write(b []byte) (int, error) {
 }
 
 func AccessLogEntry(r *http.Request, statusCode int, responseTime int64, responseSize int64) {
+	url := r.URL.String()
+	// The traffic dashboard is public; private library names must never enter it.
+	if strings.HasPrefix(r.URL.Path, "/admin/odir/") {
+		url = "/admin/odir/"
+	}
 	entry := AccessEntry{
 		Timestamp:    time.Now().UTC(),
 		Level:        LevelInfo,
 		Message:      "HTTP Request",
 		Method:       r.Method,
-		URL:          r.URL.String(),
+		URL:          url,
 		StatusCode:   statusCode,
 		ResponseTime: responseTime,
 		UserAgent:    r.UserAgent(),

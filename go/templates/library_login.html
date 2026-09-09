@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign in — CNQSO Library</title>
+    <link rel="stylesheet" href="/static/css/open-directory.css?v=20260909-2" />
+</head>
+<body>
+<main class="login">
+    {{if .Error}}<p class="error" role="alert">{{.Error}}</p>{{end}}
+    <form class="login-form" action="/admin/odir/login" method="post">
+        <input id="password" name="password" type="password" aria-label="Password" autocomplete="current-password" required autofocus maxlength="72" />
+        <button type="submit">login</button>
+    </form>
+    <p class="footer-link"><a href="/odir/">public directory</a></p>
+</main>
+</body>
+</html>
