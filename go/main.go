@@ -42,7 +42,7 @@ var routes = []types.Route{
 	{Path: "/l8", Handler: api.L8Handler},
 	{Path: "/favicon.ico/", Handler: api.FaviconHandler},
 	{Path: "/robots.txt", Handler: api.RobotsHandler},
-	// {Path: "/sitemap.xml", Handler: api.SitemapHandler},
+	{Path: "/sitemap.xml", Handler: api.SitemapHandler},
 	{Path: "/security.txt", Handler: api.SecurityTxtHandler},
 	{Path: "/.well-known/security.txt", Handler: api.SecurityTxtHandler},
 }

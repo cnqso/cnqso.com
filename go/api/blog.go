@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"server/types"
 	"sort"
 	"strings"
@@ -20,9 +21,32 @@ import (
 	"github.com/yuin/goldmark/renderer/html"
 )
 
+var blogDir = "blog-posts"
+
+var blogSlugPattern = regexp.MustCompile(`^[a-z0-9][a-z0-9-]*$`)
+
+var blogMarkdown = goldmark.New(
+	goldmark.WithExtensions(
+		extension.GFM,
+		extension.Footnote,
+		highlighting.NewHighlighting(
+			highlighting.WithStyle("solarized-light"),
+			highlighting.WithFormatOptions(
+				chromahtml.WithLineNumbers(true),
+			),
+		),
+	),
+	goldmark.WithParserOptions(
+		parser.WithAutoHeadingID(),
+	),
+	goldmark.WithRendererOptions(
+		html.WithHardWraps(),
+		html.WithXHTML(),
+	),
+)
+
 func BlogHandler(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
-	fmt.Println(path)
 	if path == "/blog" || path == "/blog/" {
 		posts, err := loadBlogPosts()
 		if err != nil {
@@ -35,73 +59,29 @@ func BlogHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slug := strings.TrimPrefix(path, "/blog/")
-	slug = strings.TrimSuffix(slug, "/")
-
-	if slug != "" {
-		post, err := loadBlogPost(slug)
-		if err != nil {
-			http.NotFound(w, r)
-			return
-		}
-
-		ServeTemplate(w, r, "blog-post.html", post)
+	slug := strings.TrimSuffix(strings.TrimPrefix(path, "/blog/"), "/")
+	post, err := loadBlogPost(slug)
+	if err != nil {
+		http.NotFound(w, r)
 		return
 	}
 
-	http.NotFound(w, r)
+	ServeTemplate(w, r, "blog-post.html", post)
 }
 
 func loadBlogPosts() ([]types.BlogPost, error) {
-	var posts []types.BlogPost
-
-	md := goldmark.New(
-		goldmark.WithExtensions(
-			extension.GFM,
-			extension.Footnote,
-			highlighting.NewHighlighting(
-				highlighting.WithStyle("solarized-light"),
-				highlighting.WithFormatOptions(
-					chromahtml.WithLineNumbers(true),
-				),
-			),
-		),
-		goldmark.WithParserOptions(
-			parser.WithAutoHeadingID(),
-		),
-		goldmark.WithRendererOptions(
-			html.WithHardWraps(),
-			html.WithXHTML(),
-		),
-	)
-
-	blogDir := "blog-posts"
-
-	err := filepath.Walk(blogDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if info.IsDir() || !strings.HasSuffix(path, ".md") {
-			return nil
-		}
-
-		content, err := os.ReadFile(path)
-		if err != nil {
-			return fmt.Errorf("failed to read file %s: %w", path, err)
-		}
-
-		post, err := parseMarkdownPost(string(content), path, md)
-		if err != nil {
-			return fmt.Errorf("failed to parse post %s: %w", path, err)
-		}
-
-		posts = append(posts, post)
-		return nil
-	})
-
+	paths, err := filepath.Glob(filepath.Join(blogDir, "*.md"))
 	if err != nil {
 		return nil, err
+	}
+
+	posts := make([]types.BlogPost, 0, len(paths))
+	for _, path := range paths {
+		post, err := readBlogPost(path)
+		if err != nil {
+			return nil, err
+		}
+		posts = append(posts, post)
 	}
 
 	sort.Slice(posts, func(i, j int) bool {
@@ -112,39 +92,19 @@ func loadBlogPosts() ([]types.BlogPost, error) {
 }
 
 func loadBlogPost(slug string) (types.BlogPost, error) {
-	md := goldmark.New(
-		goldmark.WithExtensions(
-			extension.GFM,
-			extension.Footnote,
-			highlighting.NewHighlighting(
-				highlighting.WithStyle("solarized-light"),
-				highlighting.WithFormatOptions(
-					chromahtml.WithLineNumbers(true),
-				),
-			),
-		),
-		goldmark.WithParserOptions(
-			parser.WithAutoHeadingID(),
-		),
-		goldmark.WithRendererOptions(
-			html.WithHardWraps(),
-			html.WithXHTML(),
-		),
-	)
-
-	filePath := filepath.Join("blog-posts", slug+".md")
-	fmt.Println(filePath)
-
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return types.BlogPost{}, fmt.Errorf("blog post not found: %s", slug)
+	if !blogSlugPattern.MatchString(slug) {
+		return types.BlogPost{}, fmt.Errorf("invalid blog slug: %q", slug)
 	}
+	return readBlogPost(filepath.Join(blogDir, slug+".md"))
+}
 
+func readBlogPost(filePath string) (types.BlogPost, error) {
 	content, err := os.ReadFile(filePath)
 	if err != nil {
 		return types.BlogPost{}, fmt.Errorf("failed to read file %s: %w", filePath, err)
 	}
 
-	post, err := parseMarkdownPost(string(content), filePath, md)
+	post, err := parseMarkdownPost(string(content), filePath)
 	if err != nil {
 		return types.BlogPost{}, fmt.Errorf("failed to parse post %s: %w", filePath, err)
 	}
@@ -152,8 +112,8 @@ func loadBlogPost(slug string) (types.BlogPost, error) {
 	return post, nil
 }
 
-func parseMarkdownPost(content, filePath string, md goldmark.Markdown) (types.BlogPost, error) {
-	lines := strings.Split(content, "\n")
+func parseMarkdownPost(content, filePath string) (types.BlogPost, error) {
+	lines := strings.Split(strings.ReplaceAll(content, "\r\n", "\n"), "\n")
 
 	if len(lines) < 2 {
 		return types.BlogPost{}, fmt.Errorf("post must have at least title and date lines")
@@ -174,23 +134,18 @@ func parseMarkdownPost(content, filePath string, md goldmark.Markdown) (types.Bl
 		return types.BlogPost{}, fmt.Errorf("invalid date format: %w", err)
 	}
 
-	slug := strings.TrimSuffix(filepath.Base(filePath), ".md")
-
-	contentLines := lines
-	if len(contentLines) > 3 {
-		contentLines = contentLines[3:]
-	} else {
-		contentLines = []string{}
+	var body string
+	if len(lines) > 3 {
+		body = strings.Join(lines[3:], "\n")
 	}
-	contentWithoutHeader := strings.Join(contentLines, "\n")
 
 	var buf bytes.Buffer
-	if err := md.Convert([]byte(contentWithoutHeader), &buf); err != nil {
+	if err := blogMarkdown.Convert([]byte(body), &buf); err != nil {
 		return types.BlogPost{}, fmt.Errorf("failed to convert markdown: %w", err)
 	}
 
 	return types.BlogPost{
-		Slug:     slug,
+		Slug:     strings.TrimSuffix(filepath.Base(filePath), ".md"),
 		Title:    title,
 		Date:     date,
 		Content:  template.HTML(buf.String()),
