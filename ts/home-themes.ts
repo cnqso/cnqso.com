@@ -2,7 +2,7 @@
 // the links and layout stay the same, only the styling changes.
 // The choice persists in localStorage (applied early by an inline <head> script).
 
-const THEMES = ["brut", "liquid", "bauhaus", "aero", "crochet"];
+const THEMES = ["brut", "liquid", "bauhaus", "aero", "crochet", "flip"];
 const THEME_KEY = "cnqso-theme";
 // One face per theme, so a switch can re-fit rows once the new font has loaded.
 const THEME_FONTS: Record<string, string> = {
@@ -11,12 +11,14 @@ const THEME_FONTS: Record<string, string> = {
   bauhaus: '1em "Archivo Black"',
   aero: '700 1em "Helvetica Neue", Helvetica, Arial',
   crochet: '1em "Archivo Black"',
+  flip: "1em sans-serif",
 };
 // Heavier themes live in their own modules. Nothing is fetched on a plain visit; the
 // first theme switch preloads and prepares them in idle time, so they start instantly.
 const SCENES: Record<string, { module: string; create: string }> = {
   aero: { module: "/static/js/aero.js?v=26", create: "createAero" },
   crochet: { module: "/static/js/crochet.js?v=8", create: "createCrochet" },
+  flip: { module: "/static/js/flip.js?v=1", create: "createFlip" },
 };
 
 // ---- Liquid shader: domain-warped fbm, looped by moving time around a circle ----

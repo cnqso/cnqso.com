@@ -168,10 +168,11 @@ html[data-theme="liquid"] .cursor-liquid {
     background: var(--active-bg);
 }
 
-/* Full-screen canvases for the "liquid", "aero" and "crochet" themes. */
+/* Full-screen canvases for the "liquid", "aero", "crochet" and "flip" themes. */
 #liquid,
 #aero,
-#crochet {
+#crochet,
+#flip {
     display: none;
     position: fixed;
     inset: 0;
@@ -193,7 +194,8 @@ html[data-theme="liquid"] {
 /* The body must not paint over the canvas (z-index: -1 sits under in-flow backgrounds). */
 html[data-theme="liquid"] body,
 html[data-theme="aero"] body,
-html[data-theme="crochet"] body {
+html[data-theme="crochet"] body,
+html[data-theme="flip"] body {
     background: transparent;
 }
 html[data-theme="liquid"] #liquid {
@@ -293,4 +295,44 @@ html[data-theme="crochet"].crochet-ready {
     --row-fg: transparent;
     --active-fg: transparent;
     --active-bg: transparent;
+}
+
+/* ---- flip: a mid-2000s Arabic flip phone's main menu (ts/flip.ts) ---- */
+html[data-theme="flip"] {
+    --bg: #0a3f9e;
+    --row-bg: transparent;
+    --row-fg: #ffffff;
+    --active-bg: #f2a531;
+    --active-fg: #1a0f00;
+    --font: sans-serif;
+    --cursor-fill: #ffffff;
+    --cursor-ink: #071b52;
+}
+/* The screen is drawn small and scaled up with hard pixels (sized exactly by flip.ts). */
+html[data-theme="flip"] #flip {
+    display: block;
+    image-rendering: pixelated;
+    transition: filter 0.15s;
+}
+/* The backlight times out after a while untouched. */
+html[data-theme="flip"].flip-dim #flip {
+    filter: brightness(0.3) saturate(0.6);
+    transition: filter 1.2s;
+}
+html[data-theme="flip"].flip-ready {
+    --row-fg: transparent;
+    --active-fg: transparent;
+    --active-bg: transparent;
+}
+/* Glass glare and the LCD's pixel grid, over the screen but under the pointer. */
+html[data-theme="flip"].flip-ready body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    pointer-events: none;
+    background:
+        linear-gradient(115deg, rgba(255, 255, 255, 0.1), transparent 40%),
+        linear-gradient(to right, rgba(0, 0, 0, 0.3) 1px, transparent 1px) 0 0 / var(--px) var(--px),
+        linear-gradient(to bottom, rgba(0, 0, 0, 0.3) 1px, transparent 1px) 0 0 / var(--px) var(--px);
 }
