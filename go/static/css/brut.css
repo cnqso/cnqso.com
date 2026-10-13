@@ -308,10 +308,9 @@ html[data-theme="flip"] {
     --cursor-fill: #ffffff;
     --cursor-ink: #071b52;
 }
-/* The screen is drawn small and scaled up with hard pixels (sized exactly by flip.ts). */
+/* The "photo" of the screen, sized exactly by flip.ts. */
 html[data-theme="flip"] #flip {
     display: block;
-    image-rendering: pixelated;
     transition: filter 0.15s;
 }
 /* The backlight times out after a while untouched. */
@@ -324,15 +323,17 @@ html[data-theme="flip"].flip-ready {
     --active-fg: transparent;
     --active-bg: transparent;
 }
-/* Glass glare and the LCD's pixel grid, over the screen but under the pointer. */
-html[data-theme="flip"].flip-ready body::after {
-    content: "";
+/* The glass: fingerprints, smears, dust and a reflection, lightening what's beneath. */
+.flip-glass {
+    display: none;
     position: fixed;
     inset: 0;
-    z-index: 9998;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
     pointer-events: none;
-    background:
-        linear-gradient(115deg, rgba(255, 255, 255, 0.1), transparent 40%),
-        linear-gradient(to right, rgba(0, 0, 0, 0.3) 1px, transparent 1px) 0 0 / var(--px) var(--px),
-        linear-gradient(to bottom, rgba(0, 0, 0, 0.3) 1px, transparent 1px) 0 0 / var(--px) var(--px);
+    mix-blend-mode: screen;
+}
+html[data-theme="flip"].flip-ready .flip-glass {
+    display: block;
 }
