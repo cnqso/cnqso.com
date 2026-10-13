@@ -76,6 +76,10 @@ function shade(hex: string, amount: number, alpha = 1) {
   return `rgba(${mix(n >> 16)},${mix((n >> 8) & 255)},${mix(n & 255)},${alpha})`;
 }
 
+// Per-yarn colours used per stitch, computed once rather than per stitch per redraw.
+const SHADOWS = NAMES.map((name) => shade(YARN[name], -0.62));
+const STRAYS = NAMES.map((name) => shade(YARN[name], 0.3, 0.3));
+
 // ---- The chart: a harvest scene painted stitch by stitch ----
 
 function paintScene(cols: number, rows: number) {
@@ -297,7 +301,7 @@ function drawStitch(g: CanvasRenderingContext2D, hex: string, sw: number, sh: nu
 export async function createCrochet(canvas: HTMLCanvasElement, rows: HTMLElement[]) {
   await document.fonts.load('1em "Archivo Black"');
   const ctx = canvas.getContext("2d")!;
-  const dpr = Math.min(window.devicePixelRatio, 2);
+  const dpr = Math.min(window.devicePixelRatio, 1.5); // yarn is soft; more pixels buy nothing
 
   let width = 0;
   let height = 0;
@@ -314,6 +318,10 @@ export async function createCrochet(canvas: HTMLCanvasElement, rows: HTMLElement
   let band = new Int8Array(0); // which menu row each stitch row sits in
   let fibers: { x: number; y: number; cx: number; cy: number; ex: number; ey: number; w: number }[] = [];
   let active = 0;
+  // The whole sweater with no row highlighted, and each row's highlighted strip, so a
+  // hover is two image copies instead of a re-knit.
+  let base: HTMLCanvasElement = document.createElement("canvas");
+  let strips: (HTMLCanvasElement | undefined)[] = [];
   let running = false;
 
   function makeSprites() {
@@ -379,11 +387,11 @@ export async function createCrochet(canvas: HTMLCanvasElement, rows: HTMLElement
   }
 
   // The yarn for one stitch: letters in cream with a dark outline over the scene; the
-  // active row knitted as a cream band with rust letters.
-  function yarnAt(i: number, r: number) {
+  // highlighted row knitted as a cream band with rust letters.
+  function yarnAt(i: number, r: number, highlight: number) {
     const own = letter[i];
-    if (own >= 0) return own === active ? Y.rust : Y.cream;
-    if (band[r] === active) return Y.cream;
+    if (own >= 0) return own === highlight ? Y.rust : Y.cream;
+    if (band[r] === highlight) return Y.cream;
     return outline[i] ? Y.bark : chart[i];
   }
 
@@ -419,15 +427,16 @@ export async function createCrochet(canvas: HTMLCanvasElement, rows: HTMLElement
     });
   }
 
-  // Paint the stitches whose rows touch [top, bottom] (CSS px), from scratch.
-  function draw(top: number, bottom: number) {
-    ctx.save();
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.beginPath();
-    ctx.rect(0, top, width, bottom - top);
-    ctx.clip();
-    ctx.fillStyle = "#1e130d";
-    ctx.fillRect(0, top, width, bottom - top);
+  // Knit the stitches whose rows touch [top, bottom] (CSS px) into g, whose canvas
+  // starts at page y = origin, with one menu row highlighted (or none, -1).
+  function knit(g: CanvasRenderingContext2D, top: number, bottom: number, highlight: number, origin: number) {
+    g.save();
+    g.setTransform(dpr, 0, 0, dpr, 0, -origin * dpr);
+    g.beginPath();
+    g.rect(0, top, width, bottom - top);
+    g.clip();
+    g.fillStyle = "#1e130d";
+    g.fillRect(0, top, width, bottom - top);
 
     const first = Math.max(0, Math.floor(top / sh) - 2);
     const last = Math.min(lines - 1, Math.ceil(bottom / sh) + 2);
@@ -435,15 +444,15 @@ export async function createCrochet(canvas: HTMLCanvasElement, rows: HTMLElement
     // legs tuck beneath the row above as in real knitting.
     for (let r = first; r <= last; r++)
       for (let c = 0; c < cols; c++) {
-        ctx.fillStyle = shade(YARN[NAMES[yarnAt(r * cols + c, r)]], -0.62);
-        ctx.fillRect(c * sw, r * sh, sw + 0.5, sh + 0.5);
+        g.fillStyle = SHADOWS[yarnAt(r * cols + c, r, highlight)];
+        g.fillRect(c * sw, r * sh, sw + 0.5, sh + 0.5);
       }
     const w = sprites[0][0].width / dpr;
     const h = sprites[0][0].height / dpr;
     for (let r = last; r >= first; r--)
       for (let c = 0; c < cols; c++) {
         const variant = (((c * 73856093) ^ (r * 19349663)) >>> 0) % VARIANTS;
-        ctx.drawImage(sprites[yarnAt(r * cols + c, r)][variant], c * sw - padX, r * sh - padY, w, h);
+        g.drawImage(sprites[yarnAt(r * cols + c, r, highlight)][variant], c * sw - padX, r * sh - padY, w, h);
       }
 
     // Stray fibers lying across the fabric, each in the colour of the yarn it left.
@@ -451,38 +460,90 @@ export async function createCrochet(canvas: HTMLCanvasElement, rows: HTMLElement
       if (f.y < top - 30 || f.y > bottom + 30) continue;
       const c = Math.min(cols - 1, Math.floor(f.x / sw));
       const r = Math.min(lines - 1, Math.floor(f.y / sh));
-      ctx.strokeStyle = shade(YARN[NAMES[yarnAt(r * cols + c, r)]], 0.3, 0.3);
-      ctx.lineWidth = f.w;
-      ctx.beginPath();
-      ctx.moveTo(f.x, f.y);
-      ctx.quadraticCurveTo(f.cx, f.cy, f.ex, f.ey);
-      ctx.stroke();
+      g.strokeStyle = STRAYS[yarnAt(r * cols + c, r, highlight)];
+      g.lineWidth = f.w;
+      g.beginPath();
+      g.moveTo(f.x, f.y);
+      g.quadraticCurveTo(f.cx, f.cy, f.ex, f.ey);
+      g.stroke();
     }
 
     // Drape: soft folds of light and shadow, then a warm vignette.
-    ctx.globalCompositeOperation = "soft-light";
-    const folds = ctx.createLinearGradient(0, 0, width, height * 0.6);
+    g.globalCompositeOperation = "soft-light";
+    const folds = g.createLinearGradient(0, 0, width, height * 0.6);
     [0, 0.18, 0.37, 0.55, 0.74, 1].forEach((stop, k) =>
       folds.addColorStop(stop, k % 2 ? "rgba(0,0,0,0.28)" : "rgba(255,240,220,0.22)"),
     );
-    ctx.fillStyle = folds;
-    ctx.fillRect(0, top, width, bottom - top);
-    ctx.globalCompositeOperation = "multiply";
-    const vignette = ctx.createRadialGradient(width / 2, height / 2, Math.min(width, height) * 0.35, width / 2, height / 2, Math.max(width, height) * 0.75);
+    g.fillStyle = folds;
+    g.fillRect(0, top, width, bottom - top);
+    g.globalCompositeOperation = "multiply";
+    const vignette = g.createRadialGradient(width / 2, height / 2, Math.min(width, height) * 0.35, width / 2, height / 2, Math.max(width, height) * 0.75);
     vignette.addColorStop(0, "rgba(255,255,255,1)");
     vignette.addColorStop(1, "rgba(150,110,80,1)");
-    ctx.fillStyle = vignette;
-    ctx.fillRect(0, top, width, bottom - top);
-    ctx.restore();
+    g.fillStyle = vignette;
+    g.fillRect(0, top, width, bottom - top);
+    g.restore();
+  }
+
+  // A row's strip reaches a little past the row, to cover the stitches that tuck into it.
+  function stripBounds(index: number) {
+    const box = rows[index].getBoundingClientRect();
+    return [Math.max(0, Math.floor(box.top - sh * 2)), Math.min(height, Math.ceil(box.bottom + sh * 3))];
+  }
+
+  function strip(index: number) {
+    if (!strips[index]) {
+      const [top, bottom] = stripBounds(index);
+      const knitted = document.createElement("canvas");
+      knitted.width = canvas.width;
+      knitted.height = Math.round((bottom - top) * dpr);
+      knit(knitted.getContext("2d")!, top, bottom, index, top);
+      strips[index] = knitted;
+    }
+    return strips[index]!;
+  }
+
+  function stamp(index: number) {
+    ctx.drawImage(strip(index), 0, Math.round(stripBounds(index)[0] * dpr));
+  }
+
+  function unstamp(index: number) {
+    const [top, bottom] = stripBounds(index);
+    const y = Math.round(top * dpr);
+    const h = Math.round((bottom - top) * dpr);
+    ctx.drawImage(base, 0, y, base.width, h, 0, y, base.width, h);
+  }
+
+  // Knit the plain sweater once, show it with the active row, and pre-knit the other
+  // rows' highlights in idle time.
+  function knitAll() {
+    layout();
+    base = document.createElement("canvas");
+    base.width = canvas.width;
+    base.height = canvas.height;
+    knit(base.getContext("2d")!, 0, height, -1, 0);
+    strips = [];
+    ctx.drawImage(base, 0, 0);
+    stamp(active);
+    const w = window as any;
+    const idle = (work: () => void) => (w.requestIdleCallback ? w.requestIdleCallback(work) : setTimeout(work, 50));
+    const ahead = (index: number) => {
+      if (index >= rows.length || !running) return;
+      strip(index);
+      idle(() => ahead(index + 1));
+    };
+    idle(() => ahead(0));
   }
 
   function setActive(index: number) {
     if (index === active || !running) return;
-    const rowsToRedraw = [rows[active], rows[index]].map((row) => row.getBoundingClientRect());
+    unstamp(active);
     active = index;
-    for (const box of rowsToRedraw) draw(box.top - sh * 2, box.bottom + sh * 3);
+    stamp(index);
   }
 
+  // Leaving one row fires before entering the next; wait a frame before falling back to
+  // the title, so crossing rows doesn't flash it.
   let hovered: number | null = null;
   rows.forEach((row, index) => {
     row.addEventListener("mouseenter", () => {
@@ -492,7 +553,7 @@ export async function createCrochet(canvas: HTMLCanvasElement, rows: HTMLElement
     row.addEventListener("mouseleave", () => {
       if (hovered !== index) return;
       hovered = null;
-      setActive(0);
+      requestAnimationFrame(() => hovered === null && setActive(0));
     });
   });
 
@@ -500,10 +561,7 @@ export async function createCrochet(canvas: HTMLCanvasElement, rows: HTMLElement
   window.addEventListener("resize", () => {
     if (!running) return;
     cancelAnimationFrame(pending);
-    pending = requestAnimationFrame(() => {
-      layout();
-      draw(0, height);
-    });
+    pending = requestAnimationFrame(knitAll);
   });
 
   return {
@@ -511,8 +569,7 @@ export async function createCrochet(canvas: HTMLCanvasElement, rows: HTMLElement
       if (running) return;
       running = true;
       active = hovered ?? 0;
-      layout();
-      draw(0, height);
+      knitAll();
       document.documentElement.classList.add("crochet-ready");
     },
     stop() {
