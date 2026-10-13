@@ -57,6 +57,7 @@ export async function createFlip(canvas: HTMLCanvasElement, rows: HTMLElement[])
   const ctx = screen.getContext("2d", { willReadFrequently: true })!;
   const photo = canvas.getContext("2d")!;
   const sharp = document.createElement("canvas").getContext("2d")!;
+  const glow = document.createElement("canvas").getContext("2d")!; // the bloom, blurred small
   // The glass is its own layer, so the smudges stay when the backlight dims.
   const glass = document.createElement("canvas");
   glass.className = "flip-glass";
@@ -84,6 +85,8 @@ export async function createFlip(canvas: HTMLCanvasElement, rows: HTMLElement[])
     tile = Math.max(2, Math.round(px * Math.min(window.devicePixelRatio, 2)));
     canvas.width = sharp.canvas.width = w * tile;
     canvas.height = sharp.canvas.height = h * tile;
+    glow.canvas.width = w;
+    glow.canvas.height = h;
     canvas.style.width = `${w * px}px`;
     canvas.style.height = `${h * px}px`;
     subpixels = photo.createPattern(subpixelTile(), "repeat");
@@ -222,8 +225,9 @@ export async function createFlip(canvas: HTMLCanvasElement, rows: HTMLElement[])
     }
   }
 
-  // The "photo": framebuffer through subpixels and bloom, a slightly soft camera, an
-  // unevenly lit backlight, film grain.
+  // The "photo": framebuffer through subpixels and bloom, a slightly soft and flat
+  // camera, an unevenly lit backlight, film grain. Runs only when the screen changes
+  // (a new row, the clock), never per pointer move; the bloom blurs the small framebuffer.
   function present() {
     const W = canvas.width;
     const H = canvas.height;
@@ -235,12 +239,14 @@ export async function createFlip(canvas: HTMLCanvasElement, rows: HTMLElement[])
     s.fillStyle = subpixels!;
     s.fillRect(0, 0, W, H);
     // Bright pixels bleed light into their neighbours.
+    glow.filter = "blur(1.3px)";
+    glow.clearRect(0, 0, w, h);
+    glow.drawImage(screen, 0, 0);
+    glow.filter = "none";
     s.globalCompositeOperation = "screen";
     s.globalAlpha = 0.5;
     s.imageSmoothingEnabled = true;
-    s.filter = `blur(${tile * 1.3}px)`;
-    s.drawImage(screen, 0, 0, W, H);
-    s.filter = "none";
+    s.drawImage(glow.canvas, 0, 0, W, H);
     s.globalAlpha = 1;
     s.globalCompositeOperation = "source-over";
 
@@ -475,8 +481,12 @@ export async function createFlip(canvas: HTMLCanvasElement, rows: HTMLElement[])
       draw();
       root.classList.add("flip-ready");
       // The clock and the signal bars, and the backlight timeout.
+      let shown = "";
       ticker = window.setInterval(() => {
-        draw();
+        const now = new Date();
+        const state = `${now.getHours()}:${now.getMinutes()}:${Math.floor((Date.now() / 7000) % 3)}`;
+        if (state !== shown) draw();
+        shown = state;
         root.classList.toggle("flip-dim", performance.now() - lastMove > BACKLIGHT_MS);
       }, 2000);
     },

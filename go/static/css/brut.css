@@ -323,7 +323,9 @@ html[data-theme="flip"].flip-ready {
     --active-fg: transparent;
     --active-bg: transparent;
 }
-/* The glass: fingerprints, smears, dust and a reflection, lightening what's beneath. */
+/* The glass: fingerprints, smears, dust and a reflection, lightening what's beneath.
+   All near-white, so plain transparency looks the same as a "screen" blend, without
+   making the browser re-blend the whole screen every time the pointer moves. */
 .flip-glass {
     display: none;
     position: fixed;
@@ -332,7 +334,6 @@ html[data-theme="flip"].flip-ready {
     height: 100%;
     z-index: -1;
     pointer-events: none;
-    mix-blend-mode: screen;
 }
 html[data-theme="flip"].flip-ready .flip-glass {
     display: block;
