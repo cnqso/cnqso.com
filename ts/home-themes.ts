@@ -13,12 +13,12 @@ const THEME_FONTS: Record<string, string> = {
   crochet: '1em "Archivo Black"',
   flip: "1em sans-serif",
 };
-// Heavier themes live in their own modules. Nothing is fetched on a plain visit; the
-// first theme switch preloads and prepares them in idle time, so they start instantly.
+// Heavier themes live in their own modules, fetched and prepared ahead of time (see
+// prepareAhead below), so every switch starts instantly.
 const SCENES: Record<string, { module: string; create: string }> = {
-  aero: { module: "/static/js/aero.js?v=26", create: "createAero" },
+  aero: { module: "/static/js/aero.js?v=27", create: "createAero" },
   crochet: { module: "/static/js/crochet.js?v=8", create: "createCrochet" },
-  flip: { module: "/static/js/flip.js?v=9", create: "createFlip" },
+  flip: { module: "/static/js/flip.js?v=10", create: "createFlip" },
 };
 
 // ---- Liquid shader: domain-warped fbm, looped by moving time around a circle ----
@@ -91,6 +91,11 @@ class Liquid {
     window.addEventListener("mousemove", () => {
       if (this.running && this.still) this.draw(performance.now());
     });
+  }
+
+  // Compile the shader ahead of time, so the first frame of the theme is instant.
+  prepare() {
+    if (!this.gl) this.init();
   }
 
   start() {
@@ -245,27 +250,34 @@ class Liquid {
     }
   }
 
+  // In idle time, get the next two themes ready: their fonts, their modules and scenes,
+  // liquid's shader. Two ahead, so even aero (three.js and a photo) is ready before its
+  // turn; a plain visit only prepares liquid and two small fonts.
+  function prepareAhead() {
+    const w = window as any;
+    const idle = (work: () => void) => (w.requestIdleCallback ? w.requestIdleCallback(work, { timeout: 2000 }) : setTimeout(work, 300));
+    for (const step of [1, 2]) {
+      const next = THEMES[(current + step) % THEMES.length];
+      idle(() => {
+        document.fonts?.load(THEME_FONTS[next]);
+        if (next === "liquid") liquid?.prepare();
+        if (SCENES[next]) scene(next);
+      });
+    }
+  }
+
   let current = THEMES.indexOf(root.dataset.theme || "");
   if (current < 0) current = 0;
   apply(THEMES[current]);
-
-  // Idle-time preload, once someone has shown they want to see themes.
-  function preloadScenes() {
-    const w = window as any;
-    for (const name in SCENES) {
-      if (scenes[name]) continue;
-      if (w.requestIdleCallback) w.requestIdleCallback(() => scene(name), { timeout: 1500 });
-      else setTimeout(() => scene(name), 300);
-    }
-  }
+  prepareAhead();
 
   title?.addEventListener("click", (event) => {
     // Let modified clicks (new tab, etc.) behave like a normal link.
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
-    preloadScenes();
     current = (current + 1) % THEMES.length;
     apply(THEMES[current]);
+    prepareAhead();
     try {
       localStorage.setItem(THEME_KEY, THEMES[current]);
     } catch {

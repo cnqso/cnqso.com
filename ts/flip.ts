@@ -158,11 +158,15 @@ export async function createFlip(canvas: HTMLCanvasElement, rows: HTMLElement[])
     paintGlass();
   }
 
+  let glassSize = "";
+
   // Fingerprints, swipe smears, dust, a milky film and a window reflected in the glass.
   // Drawn once per size at 1x: it's all soft anyway.
   function paintGlass() {
     const W = window.innerWidth;
     const H = window.innerHeight;
+    if (glassSize === `${W}x${H}`) return; // already painted for this size (e.g. while preloading)
+    glassSize = `${W}x${H}`;
     glass.width = W;
     glass.height = H;
     const g = glass.getContext("2d")!;
@@ -461,6 +465,10 @@ export async function createFlip(canvas: HTMLCanvasElement, rows: HTMLElement[])
       draw();
     });
   });
+
+  // Paint the glass now, while being prepared ahead of time: it uses canvas blurs, which
+  // are slow in some browsers, so keep them off the switch itself.
+  if (window.innerWidth && window.innerHeight) paintGlass();
 
   return {
     start() {

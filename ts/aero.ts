@@ -23,7 +23,7 @@ const FOV = 30;
 const BASELINE = 0.84; // baseline position within a row, in ems (matches the HTML line box)
 const GLYPH_SCALE = 0.71; // Helvetiker caps are ~1em tall; HTML caps are ~0.72em
 const BACKDROP_Z = -2500;
-const PLATE_URL = "/static/images/aero/alps-valley.webp?v=1";
+const PLATE_URL = "/static/images/aero/alps-valley.webp?v=2";
 const SKY_MASK_URL = "/static/images/aero/alps-sky-mask.png?v=1"; // white where the photo is open sky
 const PLATE_ASPECT = 16 / 9;
 const PLATE_FOCUS_X = 0.56; // keep the snowy peak in frame on narrow screens
