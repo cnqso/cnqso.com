@@ -145,12 +145,18 @@ func EsotericBenchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func StaticHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Cache-Control", "public, max-age=86400")
 	filePath := r.URL.Path[len("/static/"):]
 
 	if filepath.Ext(filePath) == "" && !strings.HasPrefix(filePath, "petrarchive/") && !strings.HasPrefix(filePath, "react/") {
 		FourHundredHandler(w, r, 403)
 		return
+	}
+	// A versioned URL (?v=...) never changes, so it can be kept for a year.
+	// ServeFile drops Cache-Control from errors, so a missing file is never cached.
+	if r.URL.Query().Has("v") {
+		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+	} else {
+		w.Header().Set("Cache-Control", "public, max-age=86400")
 	}
 	http.ServeFile(w, r, "static/"+filePath)
 }
