@@ -1,6 +1,37 @@
 :root {
     --green: #00ff00;
     --purple: #cc00ff;
+
+    /* Theme slots. The defaults are the original "brut" look; each
+       html[data-theme] block below swaps them. Clicking the title cycles. */
+    --bg: var(--purple);
+    --row-bg: var(--purple);
+    --row-fg: var(--green);
+    --active-bg: var(--green);
+    --active-fg: var(--green);
+    --font: "Coral Pixels", monospace;
+    --cursor-ink: #000000; /* finger outline */
+    --cursor-fill: transparent; /* inside the finger */
+    --cursor-backdrop: none; /* filter applied to whatever is behind the finger */
+    --cursor-shadow: none;
+}
+
+/* Self-hosted, subset to the homepage's own characters (scripts/subset-fonts.sh). */
+@font-face {
+    font-family: "Coral Pixels";
+    src: url("../fonts/coral-pixels.woff2?v=1") format("woff2");
+    font-display: swap;
+}
+@font-face {
+    font-family: "Archivo Black";
+    src: url("../fonts/archivo-black.woff2?v=1") format("woff2");
+    font-display: swap;
+}
+@font-face {
+    font-family: "Unbounded";
+    font-weight: 900;
+    src: url("../fonts/unbounded-900.woff2?v=1") format("woff2");
+    font-display: swap;
 }
 
 * {
@@ -16,9 +47,9 @@ body {
     width: 100vw;
     height: 100vh;
     overflow: hidden;
-    background: var(--purple);
-    color: var(--green);
-    font-family: "Coral Pixels", monospace;
+    background: var(--bg);
+    color: var(--row-fg);
+    font-family: var(--font);
     -webkit-font-smoothing: none;
 }
 
@@ -37,12 +68,49 @@ body,
     height: 180px;
     z-index: 9999;
     pointer-events: none;
-    background-size: contain;
-    background-repeat: no-repeat;
-    image-rendering: pixelated; /* keep the Win98 pixels crisp when scaled up */
     will-change: transform;
-    /* recolored cargo.site Win98 pointing finger (only shown while in-window) */
-    background-image: url("../cursors/left_green.png");
+    filter: var(--cursor-shadow);
+}
+
+/* cargo.site Win98 pointing finger (only shown while in-window), drawn as two
+   masked layers so each theme can color the outline and the inside separately. */
+#cursor::before,
+#cursor::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    image-rendering: pixelated; /* keep the Win98 pixels crisp when scaled up */
+    -webkit-mask: var(--mask) center / contain no-repeat;
+    mask: var(--mask) center / contain no-repeat;
+}
+#cursor::before {
+    --mask: url("../cursors/left_fill.png");
+    background: var(--cursor-fill);
+    -webkit-backdrop-filter: var(--cursor-backdrop);
+    backdrop-filter: var(--cursor-backdrop);
+}
+#cursor::after {
+    --mask: url("../cursors/left_green.png");
+    background: var(--cursor-ink);
+}
+
+/* Liquid only: a copy of the liquid inside the finger, drawn where the finger covers
+   the black active row (ts/home-themes.ts). It is shown un-inverted, so the finger's
+   polarity flips over black. (No blend mode here: a blending child would isolate
+   #cursor and cut the backdrop filter off from the page.) */
+.cursor-liquid {
+    display: none;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    -webkit-mask: url("../cursors/left_fill.png") center / contain no-repeat;
+    mask: url("../cursors/left_fill.png") center / contain no-repeat;
+    filter: grayscale(1) contrast(1.3);
+}
+html[data-theme="liquid"] .cursor-liquid {
+    display: block;
 }
 
 /* The page is the list. A column of rows filling the full height. */
@@ -57,6 +125,7 @@ body,
 /* Each row is a full-width link whose characters spread edge-to-edge. */
 .row {
     flex: 1 1 0;
+    min-height: 0; /* let rows shrink below their font size on resize; fit() re-sizes the type */
     position: relative;
     display: flex;
     align-items: center;
@@ -64,8 +133,8 @@ body,
     text-align: center;
     line-height: 1;
     text-decoration: none;
-    color: var(--green);
-    background: var(--purple);
+    color: var(--row-fg);
+    background: var(--row-bg);
     white-space: nowrap;
 }
 
@@ -83,15 +152,114 @@ body,
     align-items: flex-end;
 }
 
-/* Coral Pixels is a color font, so we can only paint the background.
-   Exactly one row is "active" (green) at a time. Default: the title.
-   Hovering any row moves the green to it; the title goes purple. */
+/* Exactly one row is "active" at a time. Default: the title.
+   Hovering any row moves the highlight to it; the title goes back to normal.
+   (Coral Pixels is a color font, so in "brut" only the background changes.) */
 .title {
-    background: var(--green);
+    color: var(--active-fg);
+    background: var(--active-bg);
 }
 .stack:hover .title:not(:hover) {
-    background: var(--purple);
+    color: var(--row-fg);
+    background: var(--row-bg);
 }
 .row:hover {
-    background: var(--green);
+    color: var(--active-fg);
+    background: var(--active-bg);
+}
+
+/* Full-screen canvases for the "liquid" and "aero" themes. */
+#liquid,
+#aero {
+    display: none;
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+}
+
+/* ---- liquid: domain-warped noise shader behind difference-blended type ---- */
+html[data-theme="liquid"] {
+    --bg: #04140a;
+    --row-bg: transparent;
+    --row-fg: #ffffff;
+    --active-bg: #0b0a08;
+    --active-fg: #c8ff3a;
+    --font: "Unbounded", sans-serif;
+    --cursor-backdrop: grayscale(1) invert(1) contrast(1.3); /* a black-and-white window into the liquid */
+}
+/* The body must not paint over the canvas (z-index: -1 sits under in-flow backgrounds). */
+html[data-theme="liquid"] body,
+html[data-theme="aero"] body {
+    background: transparent;
+}
+html[data-theme="liquid"] #liquid {
+    display: block;
+}
+html[data-theme="liquid"] .row {
+    font-weight: 900;
+    mix-blend-mode: difference; /* white type inverts the green liquid into magenta */
+}
+html[data-theme="liquid"] .title,
+html[data-theme="liquid"] .row:hover {
+    mix-blend-mode: normal;
+}
+html[data-theme="liquid"] .stack:hover .title:not(:hover) {
+    mix-blend-mode: difference;
+}
+
+/* ---- bauhaus: newsprint, black grotesque, red highlight ---- */
+html[data-theme="bauhaus"] {
+    --bg: #efeae0;
+    --row-bg: #efeae0;
+    --row-fg: #111111;
+    --active-bg: #ff3b1f;
+    --active-fg: #111111;
+    --font: "Archivo Black", sans-serif;
+    --cursor-fill: #ff3b1f;
+    --cursor-ink: #111111;
+}
+html[data-theme="bauhaus"] .row + .row {
+    border-top: 2px solid #111111;
+}
+
+/* ---- aero: three.js glass letters over an alpine sky (ts/aero.ts) ---- */
+html[data-theme="aero"] {
+    --bg: linear-gradient(#2f8de4, #bfe9ff 60%, #7fd36a);
+    --row-bg: transparent;
+    --row-fg: #ffffff;
+    --active-bg: rgba(255, 255, 255, 0.3);
+    --active-fg: #0b5fbf;
+    --font: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --cursor-fill: #ffffff;
+    --cursor-ink: #0b3d91;
+    --cursor-shadow: drop-shadow(0 10px 14px rgba(0, 50, 120, 0.45));
+}
+html[data-theme="aero"] #aero {
+    display: block;
+    opacity: 0;
+    transition: opacity 0.25s ease-out;
+}
+/* Fade the scene in over the fallback type rather than popping. */
+html[data-theme="aero"].aero-ready #aero {
+    opacity: 1;
+}
+html[data-theme="aero"] .row {
+    font-weight: 700;
+    text-shadow: 0 0.03em 0.08em rgba(0, 60, 140, 0.35);
+}
+/* Once the scene is drawing, the 3D glyphs replace the type; the rows stay as
+   invisible links so hover and clicks work exactly as before. */
+html[data-theme="aero"].aero-ready {
+    --row-fg: transparent;
+    --active-fg: transparent;
+    --active-bg: transparent;
+}
+html[data-theme="aero"].aero-ready .row {
+    text-shadow: none;
+}
+/* ...and the 3D hand replaces the 2D finger. */
+html[data-theme="aero"].aero-hand #cursor {
+    visibility: hidden;
 }

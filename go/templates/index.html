@@ -10,10 +10,23 @@
         <meta name="apple-mobile-web-app-title" content="CNQSO" />
         <link rel="manifest" href="/favicon.ico/site.webmanifest" />
         <title>cnqso.com</title>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Coral+Pixels&display=swap" />
-        <link rel="stylesheet" type="text/css" href="static/css/brut.css" />
+        <link rel="preload" href="static/fonts/coral-pixels.woff2?v=1" as="font" type="font/woff2" crossorigin />
+        <link rel="stylesheet" type="text/css" href="static/css/brut.css?v=10" />
+        <script type="importmap">
+            {
+                "imports": {
+                    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js",
+                    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+                }
+            }
+        </script>
+        <script>
+            // Apply the saved homepage theme before first paint (see ts/home-themes.ts).
+            try {
+                var theme = localStorage.getItem("cnqso-theme");
+                if (theme) document.documentElement.dataset.theme = theme;
+            } catch (e) {}
+        </script>
     </head>
     <body>
         <main class="stack" id="stack">
@@ -28,7 +41,9 @@
             <a class="row" href="/blog" data-text="BLOG"></a>
         </main>
 
-        <div id="cursor"></div>
+        <canvas id="liquid" aria-hidden="true"></canvas>
+        <canvas id="aero" aria-hidden="true"></canvas>
+        <div id="cursor"><canvas class="cursor-liquid" width="90" height="90"></canvas></div>
 
         <script>
             // Split each row into per-character flex items so the first and last
@@ -101,5 +116,6 @@
                 });
             })();
         </script>
+        <script src="static/js/home-themes.js?v=30"></script>
     </body>
 </html>
