@@ -10,6 +10,7 @@ import (
 	"server/core"
 	"server/db"
 	"server/logs"
+	"server/middleware"
 	"server/types"
 	"syscall"
 	"time"
@@ -54,7 +55,7 @@ func main() {
 	defer logs.StopWriter()
 
 	for _, route := range routes {
-		http.HandleFunc(route.Path, logs.Handler(route.Handler))
+		http.HandleFunc(route.Path, logs.Handler(middleware.Gzip(route.Handler)))
 	}
 
 	logs.INFO("Starting server", map[string]any{"port": config.Port})

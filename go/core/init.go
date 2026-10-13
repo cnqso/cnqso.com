@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"html/template"
+	"mime"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -25,6 +26,9 @@ func Init() {
 	}
 
 	logs.StartWriter()
+
+	// Go has no built-in type for 3D models; gzip only compresses types it can name.
+	mime.AddExtensionType(".glb", "model/gltf-binary")
 
 	if config.CompileTypeScript {
 		go compileTypeScript()
