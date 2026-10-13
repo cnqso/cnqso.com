@@ -168,9 +168,10 @@ html[data-theme="liquid"] .cursor-liquid {
     background: var(--active-bg);
 }
 
-/* Full-screen canvases for the "liquid" and "aero" themes. */
+/* Full-screen canvases for the "liquid", "aero" and "crochet" themes. */
 #liquid,
-#aero {
+#aero,
+#crochet {
     display: none;
     position: fixed;
     inset: 0;
@@ -191,7 +192,8 @@ html[data-theme="liquid"] {
 }
 /* The body must not paint over the canvas (z-index: -1 sits under in-flow backgrounds). */
 html[data-theme="liquid"] body,
-html[data-theme="aero"] body {
+html[data-theme="aero"] body,
+html[data-theme="crochet"] body {
     background: transparent;
 }
 html[data-theme="liquid"] #liquid {
@@ -262,4 +264,25 @@ html[data-theme="aero"].aero-ready .row {
 /* ...and the 3D hand replaces the 2D finger. */
 html[data-theme="aero"].aero-hand #cursor {
     visibility: hidden;
+}
+
+/* ---- crochet: a hand-knit harvest sweater on a 2D canvas (ts/crochet.ts) ---- */
+html[data-theme="crochet"] {
+    --bg: #d8c49c;
+    --row-bg: transparent;
+    --row-fg: #6b1f25;
+    --active-bg: #efe3c8;
+    --active-fg: #93391c;
+    --font: "Archivo Black", sans-serif;
+    --cursor-fill: #efe3c8;
+    --cursor-ink: #3a271b;
+}
+html[data-theme="crochet"] #crochet {
+    display: block;
+}
+/* Once knitted, the letters are stitches; the rows stay as invisible links. */
+html[data-theme="crochet"].crochet-ready {
+    --row-fg: transparent;
+    --active-fg: transparent;
+    --active-bg: transparent;
 }

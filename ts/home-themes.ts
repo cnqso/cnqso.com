@@ -2,7 +2,7 @@
 // the links and layout stay the same, only the styling changes.
 // The choice persists in localStorage (applied early by an inline <head> script).
 
-const THEMES = ["brut", "liquid", "bauhaus", "aero"];
+const THEMES = ["brut", "liquid", "bauhaus", "aero", "crochet"];
 const THEME_KEY = "cnqso-theme";
 // One face per theme, so a switch can re-fit rows once the new font has loaded.
 const THEME_FONTS: Record<string, string> = {
@@ -10,11 +10,14 @@ const THEME_FONTS: Record<string, string> = {
   liquid: '900 1em "Unbounded"',
   bauhaus: '1em "Archivo Black"',
   aero: '700 1em "Helvetica Neue", Helvetica, Arial',
+  crochet: '1em "Archivo Black"',
 };
-// The aero theme's three.js scene is a separate module. Nothing is fetched on a plain
-// visit; the first theme switch preloads and pre-compiles it in idle time, so by the
-// time aero comes round it starts instantly.
-const AERO_MODULE = "/static/js/aero.js?v=25";
+// Heavier themes live in their own modules. Nothing is fetched on a plain visit; the
+// first theme switch preloads and prepares them in idle time, so they start instantly.
+const SCENES: Record<string, { module: string; create: string }> = {
+  aero: { module: "/static/js/aero.js?v=25", create: "createAero" },
+  crochet: { module: "/static/js/crochet.js?v=4", create: "createCrochet" },
+};
 
 // ---- Liquid shader: domain-warped fbm, looped by moving time around a circle ----
 
@@ -204,18 +207,20 @@ class Liquid {
   const title = document.querySelector<HTMLAnchorElement>(".row.title");
   const canvas = document.getElementById("liquid") as HTMLCanvasElement | null;
   const liquid = canvas ? new Liquid(canvas) : null;
-  const aeroCanvas = document.getElementById("aero") as HTMLCanvasElement | null;
   const rows = Array.prototype.slice.call(document.querySelectorAll(".row")) as HTMLElement[];
-  let aero: Promise<any> | null = null;
+  const scenes: Record<string, Promise<any>> = {};
 
-  // If WebGL or the CDN fails, the CSS fallback (plain type on a sky gradient) stays.
-  function aeroScene() {
-    if (!aero && aeroCanvas) {
-      aero = import(AERO_MODULE)
-        .then((module) => module.createAero(aeroCanvas, rows))
-        .catch(() => null);
+  // Each scene draws into the canvas of the same id. If it fails to load, the theme's
+  // CSS fallback (plain type) stays.
+  function scene(name: string) {
+    if (!scenes[name]) {
+      const canvas = document.getElementById(name);
+      const { module, create } = SCENES[name];
+      scenes[name] = canvas
+        ? import(module).then((loaded) => loaded[create](canvas, rows)).catch(() => null)
+        : Promise.resolve(null);
     }
-    return aero || Promise.resolve(null);
+    return scenes[name];
   }
 
   // The inline fit() in index.html listens for resize; re-run it for the new font.
@@ -231,13 +236,10 @@ class Liquid {
     if (theme === "liquid") liquid?.start();
     else liquid?.stop();
     refit(theme);
-    if (theme === "aero") {
-      aeroScene().then((scene) => {
-        // Re-check: the theme may have changed again while the scene was loading.
-        if (root.dataset.theme === "aero") scene?.start();
-      });
-    } else {
-      aero?.then((scene) => scene?.stop());
+    for (const name in SCENES) {
+      // Re-check on load: the theme may have changed again while the scene was loading.
+      if (name === theme) scene(name).then((loaded) => root.dataset.theme === name && loaded?.start());
+      else scenes[name]?.then((loaded) => loaded?.stop());
     }
   }
 
@@ -246,18 +248,20 @@ class Liquid {
   apply(THEMES[current]);
 
   // Idle-time preload, once someone has shown they want to see themes.
-  function preloadAero() {
-    if (aero) return;
+  function preloadScenes() {
     const w = window as any;
-    if (w.requestIdleCallback) w.requestIdleCallback(() => aeroScene(), { timeout: 1500 });
-    else setTimeout(aeroScene, 300);
+    for (const name in SCENES) {
+      if (scenes[name]) continue;
+      if (w.requestIdleCallback) w.requestIdleCallback(() => scene(name), { timeout: 1500 });
+      else setTimeout(() => scene(name), 300);
+    }
   }
 
   title?.addEventListener("click", (event) => {
     // Let modified clicks (new tab, etc.) behave like a normal link.
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
-    preloadAero();
+    preloadScenes();
     current = (current + 1) % THEMES.length;
     apply(THEMES[current]);
     try {
