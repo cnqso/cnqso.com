@@ -280,6 +280,14 @@ html[data-theme="crochet"] {
 html[data-theme="crochet"] #crochet {
     display: block;
 }
+/* ...and the pointer is a knitted glove (drawn by ts/crochet.ts). */
+html[data-theme="crochet"].crochet-glove #cursor {
+    background: var(--glove) center / contain no-repeat;
+}
+html[data-theme="crochet"].crochet-glove #cursor::before,
+html[data-theme="crochet"].crochet-glove #cursor::after {
+    display: none;
+}
 /* Once knitted, the letters are stitches; the rows stay as invisible links. */
 html[data-theme="crochet"].crochet-ready {
     --row-fg: transparent;

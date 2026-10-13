@@ -298,6 +298,60 @@ function drawStitch(g: CanvasRenderingContext2D, hex: string, sw: number, sh: nu
   }
 }
 
+// ---- The pointer: the Win98 finger, knitted as a matching glove ----
+
+const CURSOR_PX = 180; // the cursor box in brut.css
+const CUFF_FROM = 29; // pixel columns from here back are the ribbed cuff
+
+async function cursorPixels(name: string) {
+  const image = new Image();
+  image.src = `/static/cursors/${name}.png`;
+  await image.decode();
+  const g = document.createElement("canvas").getContext("2d", { willReadFrequently: true })!;
+  g.canvas.width = image.width;
+  g.canvas.height = image.height;
+  g.drawImage(image, 0, 0);
+  const pixels = g.getImageData(0, 0, image.width, image.height).data;
+  return { size: image.width, alpha: (x: number, y: number) => pixels[(y * image.width + x) * 4 + 3] > 0 };
+}
+
+// One stitch per pixel of the cursor: mustard body, brown outline and finger seams,
+// a burgundy-and-rust ribbed cuff. Returns an image URL for CSS.
+async function knitGlove(dpr: number) {
+  const [fill, edge] = await Promise.all([cursorPixels("left_fill"), cursorPixels("left_green")]);
+  const n = fill.size;
+  const stitch = CURSOR_PX / n;
+  const yarns: Record<string, HTMLCanvasElement> = {};
+  const sprite = (name: string) => {
+    if (!yarns[name]) {
+      const pad = stitch * 0.6;
+      const c = document.createElement("canvas");
+      c.width = c.height = Math.ceil((stitch + pad * 2) * dpr);
+      const g = c.getContext("2d")!;
+      g.scale(dpr, dpr);
+      g.translate(pad, pad);
+      drawStitch(g, YARN[name], stitch, stitch, seeded(name.length * 7919));
+      yarns[name] = c;
+    }
+    return yarns[name];
+  };
+  const glove = document.createElement("canvas");
+  glove.width = glove.height = Math.round(CURSOR_PX * dpr);
+  const g = glove.getContext("2d")!;
+  g.scale(dpr, dpr);
+  for (let y = n - 1; y >= 0; y--)
+    for (let x = 0; x < n; x++) {
+      if (!fill.alpha(x, y) && !edge.alpha(x, y)) continue;
+      const name = edge.alpha(x, y) ? "bark" : x >= CUFF_FROM ? (x % 2 ? "burgundy" : "rust") : "mustard";
+      const knitted = sprite(name);
+      const pad = stitch * 0.6;
+      g.fillStyle = SHADOWS[Y[name]];
+      g.fillRect(x * stitch, y * stitch, stitch, stitch);
+      g.drawImage(knitted, x * stitch - pad, y * stitch - pad, knitted.width / dpr, knitted.height / dpr);
+    }
+  return glove.toDataURL();
+}
+
 export async function createCrochet(canvas: HTMLCanvasElement, rows: HTMLElement[]) {
   await document.fonts.load('1em "Archivo Black"');
   const ctx = canvas.getContext("2d")!;
@@ -318,6 +372,7 @@ export async function createCrochet(canvas: HTMLCanvasElement, rows: HTMLElement
   let band = new Int8Array(0); // which menu row each stitch row sits in
   let fibers: { x: number; y: number; cx: number; cy: number; ex: number; ey: number; w: number }[] = [];
   let active = 0;
+  let glove = ""; // the knitted pointer, once ready
   // The whole sweater with no row highlighted, and each row's highlighted strip, so a
   // hover is two image copies instead of a re-knit.
   let base: HTMLCanvasElement = document.createElement("canvas");
@@ -517,6 +572,7 @@ export async function createCrochet(canvas: HTMLCanvasElement, rows: HTMLElement
   // Knit the plain sweater once, show it with the active row, and pre-knit the other
   // rows' highlights in idle time.
   function knitAll() {
+    if (!window.innerWidth || !window.innerHeight) return; // not laid out yet: knit on resize
     layout();
     base = document.createElement("canvas");
     base.width = canvas.width;
@@ -525,6 +581,7 @@ export async function createCrochet(canvas: HTMLCanvasElement, rows: HTMLElement
     strips = [];
     ctx.drawImage(base, 0, 0);
     stamp(active);
+    document.documentElement.classList.add("crochet-ready");
     const w = window as any;
     const idle = (work: () => void) => (w.requestIdleCallback ? w.requestIdleCallback(work) : setTimeout(work, 50));
     const ahead = (index: number) => {
@@ -557,6 +614,18 @@ export async function createCrochet(canvas: HTMLCanvasElement, rows: HTMLElement
     });
   });
 
+  function wearGlove() {
+    if (!glove || !running) return;
+    document.documentElement.style.setProperty("--glove", `url("${glove}")`);
+    document.documentElement.classList.add("crochet-glove");
+  }
+  knitGlove(dpr)
+    .then((url) => {
+      glove = url;
+      wearGlove();
+    })
+    .catch(() => {}); // no glove: the plain pointer stays
+
   let pending = 0;
   window.addEventListener("resize", () => {
     if (!running) return;
@@ -570,11 +639,11 @@ export async function createCrochet(canvas: HTMLCanvasElement, rows: HTMLElement
       running = true;
       active = hovered ?? 0;
       knitAll();
-      document.documentElement.classList.add("crochet-ready");
+      wearGlove();
     },
     stop() {
       running = false;
-      document.documentElement.classList.remove("crochet-ready");
+      document.documentElement.classList.remove("crochet-ready", "crochet-glove");
     },
   };
 }
