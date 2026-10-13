@@ -1,6 +1,7 @@
 @font-face {
     font-family: "Perfect DOS VGA";
-    src: url("/static/fonts/FSEX300.ttf") format("truetype");
+    /* Subset of FSEX300.ttf: Latin, punctuation, arrows and box drawing (575 KB -> 10 KB). */
+    src: url("/static/fonts/fixedsys-excelsior.woff2?v=1") format("woff2");
     font-display: swap;
 }
 

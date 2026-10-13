@@ -15,8 +15,8 @@ const THEME_FONTS: Record<string, string> = {
 // Heavier themes live in their own modules. Nothing is fetched on a plain visit; the
 // first theme switch preloads and prepares them in idle time, so they start instantly.
 const SCENES: Record<string, { module: string; create: string }> = {
-  aero: { module: "/static/js/aero.js?v=25", create: "createAero" },
-  crochet: { module: "/static/js/crochet.js?v=4", create: "createCrochet" },
+  aero: { module: "/static/js/aero.js?v=26", create: "createAero" },
+  crochet: { module: "/static/js/crochet.js?v=5", create: "createCrochet" },
 };
 
 // ---- Liquid shader: domain-warped fbm, looped by moving time around a circle ----

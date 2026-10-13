@@ -23,12 +23,12 @@ const FOV = 30;
 const BASELINE = 0.84; // baseline position within a row, in ems (matches the HTML line box)
 const GLYPH_SCALE = 0.71; // Helvetiker caps are ~1em tall; HTML caps are ~0.72em
 const BACKDROP_Z = -2500;
-const PLATE_URL = "/static/images/aero/alps-valley.jpg";
-const SKY_MASK_URL = "/static/images/aero/alps-sky-mask.png"; // white where the photo is open sky
+const PLATE_URL = "/static/images/aero/alps-valley.webp?v=1";
+const SKY_MASK_URL = "/static/images/aero/alps-sky-mask.png?v=1"; // white where the photo is open sky
 const PLATE_ASPECT = 16 / 9;
 const PLATE_FOCUS_X = 0.56; // keep the snowy peak in frame on narrow screens
 
-const MASTER_HAND_URL = "/static/models/master-hand/master-hand.glb";
+const MASTER_HAND_URL = "/static/models/master-hand/master-hand.glb?v=1";
 const XR_HAND_URL =
   "https://cdn.jsdelivr.net/npm/@webxr-input-profiles/assets@1.0.19/dist/profiles/generic-hand/right.glb";
 const HAND_PX = 165; // wrist to fingertip, as it appears on screen
