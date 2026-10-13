@@ -1,7 +1,7 @@
 // Flip theme: the homepage as the main menu of a mid-2000s Arabic-language flip phone,
 // as if photographed. A small screen in 4096 colours with ordered dithering is drawn up
-// through red, green and blue subpixels, bloom and a slightly soft camera, under glass
-// with fingerprints, smears, dust and a window's reflection. Legible or not, by now you
+// through red, green and blue subpixels, bloom and a slightly soft camera (one WebGL
+// pass), under glass with real fingerprints, smears, dust and a window's reflection. Legible or not, by now you
 // know the top of the screen changes the theme. Loaded on demand by home-themes.ts.
 
 const LABELS: Record<string, string> = {
@@ -50,23 +50,91 @@ function seeded(seed: number) {
 // Ordered dithering down to 4 bits per channel, the colour depth of the era.
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 
+// The "photo", in one WebGL pass over the small framebuffer: crisp pixels a little out
+// of focus, red/green/blue subpixels with dark gaps, bloom, a flat camera, an unevenly
+// lit backlight and film grain. Shaders run the same everywhere; 2D canvas filters don't.
+const PHOTO_VERTEX = "attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}";
+const PHOTO_FRAGMENT = `precision highp float;
+uniform sampler2D uScreen;
+uniform vec2 uSize, uCanvas;
+uniform float uTile;
+float hash(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}
+vec3 at(vec2 p){return texture2D(uScreen,p/uSize).rgb;}
+void main(){
+  vec2 frag=vec2(gl_FragCoord.x,uCanvas.y-gl_FragCoord.y);
+  vec2 p=frag/uTile,cell=floor(p),f=fract(p);
+  vec3 soft=at(p);
+  vec3 c=mix(at(cell+.5),soft,.3);
+  float s=f.x*3.;
+  vec3 mask=vec3(.7)+.3*vec3(step(s,1.),step(1.,s)*step(s,2.),step(2.,s));
+  float gap=max(smoothstep(.78,.9,f.x),smoothstep(.78,.9,f.y));
+  c*=mask*mix(1.,.23,gap);
+  vec3 glow=vec3(0.);
+  for(int i=0;i<8;i++){float a=float(i)*.7853982;glow+=at(p+vec2(cos(a),sin(a))*1.7);}
+  glow=glow/8.*.6+soft*.4;
+  c=1.-(1.-c)*(1.-glow*.5);
+  float l=dot(c,vec3(.299,.587,.114));
+  c=mix(vec3(l),c,.9);
+  c=(c-.5)*.88+.5;
+  c*=1.08;
+  vec2 uv=frag/uCanvas;
+  float d=length((uv-vec2(.5,.58))*vec2(uCanvas.x/uCanvas.y,1.));
+  c*=mix(1.,.56,smoothstep(.12,1.,d));
+  c=1.-(1.-c)*(1.-vec3(.47,.67,1.)*.16*smoothstep(.8,1.,uv.y));
+  c+=(hash(floor(frag))-.5)*.045;
+  gl_FragColor=vec4(c,1.);
+}`;
+
+// Real fingerprints: four single prints cut from TextureCan's "Fingerprint Imperfection"
+// sheet (CC0), each turned upright and packed side by side, white with alpha.
+const PRINTS_URL = "/static/images/flip/fingerprints.webp?v=1";
+const PRINT_CELL = 256;
+
 export async function createFlip(canvas: HTMLCanvasElement, rows: HTMLElement[]) {
   const root = document.documentElement;
   // The phone's own framebuffer, small; the visible canvas is the "photo" of it.
   const screen = document.createElement("canvas");
   const ctx = screen.getContext("2d", { willReadFrequently: true })!;
-  const photo = canvas.getContext("2d")!;
-  const sharp = document.createElement("canvas").getContext("2d")!;
-  const glow = document.createElement("canvas").getContext("2d")!; // the bloom, blurred small
+  const ink = document.createElement("canvas").getContext("2d", { willReadFrequently: true })!;
   // The glass is its own layer, so the smudges stay when the backlight dims.
   const glass = document.createElement("canvas");
   glass.className = "flip-glass";
   glass.setAttribute("aria-hidden", "true");
   canvas.after(glass);
+  const prints = new Image();
+  prints.src = PRINTS_URL;
+  await prints.decode().catch(() => {}); // no prints: the rest of the glass still shows
+
+  const gl = canvas.getContext("webgl", { antialias: false, alpha: false });
+  const fallback = gl ? null : canvas.getContext("2d");
+  let uniforms: Record<string, WebGLUniformLocation | null> = {};
+  if (gl) {
+    const program = gl.createProgram()!;
+    for (const [type, source] of [
+      [gl.VERTEX_SHADER, PHOTO_VERTEX],
+      [gl.FRAGMENT_SHADER, PHOTO_FRAGMENT],
+    ] as [number, string][]) {
+      const shader = gl.createShader(type)!;
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+      gl.attachShader(program, shader);
+    }
+    gl.linkProgram(program);
+    gl.useProgram(program);
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const position = gl.getAttribLocation(program, "p");
+    gl.enableVertexAttribArray(position);
+    gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+    for (const name of ["uScreen", "uSize", "uCanvas", "uTile"]) uniforms[name] = gl.getUniformLocation(program, name);
+    gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  }
+
   let tile = 4; // device pixels per screen pixel
-  let subpixels: CanvasPattern | null = null;
-  let grain: CanvasPattern | null = null;
-  const ink = document.createElement("canvas").getContext("2d", { willReadFrequently: true })!;
   let px = 4; // CSS pixels per screen pixel
   let w = 0;
   let h = 0;
@@ -83,57 +151,21 @@ export async function createFlip(canvas: HTMLCanvasElement, rows: HTMLElement[])
     screen.width = ink.canvas.width = w;
     screen.height = ink.canvas.height = h;
     tile = Math.max(2, Math.round(px * Math.min(window.devicePixelRatio, 2)));
-    canvas.width = sharp.canvas.width = w * tile;
-    canvas.height = sharp.canvas.height = h * tile;
-    glow.canvas.width = w;
-    glow.canvas.height = h;
+    canvas.width = w * tile;
+    canvas.height = h * tile;
     canvas.style.width = `${w * px}px`;
     canvas.style.height = `${h * px}px`;
-    subpixels = photo.createPattern(subpixelTile(), "repeat");
-    grain = photo.createPattern(grainTile(), "repeat");
     paintGlass();
   }
 
-  // One screen pixel: red, green and blue stripes with a dark gap below and beside.
-  function subpixelTile() {
-    const t = document.createElement("canvas");
-    t.width = t.height = tile;
-    const g = t.getContext("2d")!;
-    g.fillStyle = "#3a3a3a";
-    g.fillRect(0, 0, tile, tile);
-    const gap = Math.max(1, Math.round(tile * 0.16));
-    const stripe = (tile - gap) / 3;
-    ["#ffb3a6", "#b6ffb3", "#b3c6ff"].forEach((colour, i) => {
-      g.fillStyle = colour;
-      g.fillRect(i * stripe, 0, stripe, tile - gap);
-    });
-    return t;
-  }
-
-  function grainTile() {
-    const t = document.createElement("canvas");
-    t.width = t.height = 128;
-    const g = t.getContext("2d")!;
-    const noise = g.createImageData(128, 128);
-    const rand = seeded(7);
-    for (let i = 0; i < noise.data.length; i += 4) {
-      const v = 128 + (rand() - 0.5) * 100;
-      noise.data[i] = noise.data[i + 1] = noise.data[i + 2] = v;
-      noise.data[i + 3] = 255;
-    }
-    g.putImageData(noise, 0, 0);
-    return t;
-  }
-
   // Fingerprints, swipe smears, dust, a milky film and a window reflected in the glass.
+  // Drawn once per size at 1x: it's all soft anyway.
   function paintGlass() {
     const W = window.innerWidth;
     const H = window.innerHeight;
-    const dpr = Math.min(window.devicePixelRatio, 2);
-    glass.width = Math.round(W * dpr);
-    glass.height = Math.round(H * dpr);
+    glass.width = W;
+    glass.height = H;
     const g = glass.getContext("2d")!;
-    g.setTransform(dpr, 0, 0, dpr, 0, 0);
     const rand = seeded(Math.round(W) * 7 + Math.round(H));
 
     g.fillStyle = "rgba(255,255,255,0.05)";
@@ -175,36 +207,27 @@ export async function createFlip(canvas: HTMLCanvasElement, rows: HTMLElement[])
     }
     g.restore();
 
-    // Fingerprints: whorls of broken ridges, mostly where a thumb lands.
-    g.save();
-    g.filter = "blur(0.6px)";
-    for (let p = 0; p < 4; p++) {
-      const cx = W * (p === 0 ? 0.78 : 0.15 + rand() * 0.75);
-      const cy = H * (p === 0 ? 0.72 : 0.15 + rand() * 0.75);
-      const size = Math.min(W, H) * (0.06 + rand() * 0.04);
-      const tilt = rand() * Math.PI;
-      const alpha = 0.1 + rand() * 0.07;
-      for (let k = 2; k < 26; k++) {
-        const r = (size * k) / 26;
-        g.strokeStyle = `rgba(255,255,255,${alpha * (1 - k / 34)})`;
-        g.lineWidth = Math.max(0.8, size / 40);
-        g.setLineDash([2 + rand() * 9, 1 + rand() * 4]);
-        g.beginPath();
-        for (let a = 0; a <= 64; a++) {
-          const t = (a / 64) * Math.PI * 2;
-          const wobble = 1 + 0.04 * Math.sin(t * 5 + k * 0.7);
-          const x = Math.cos(t) * r * 0.72 * wobble;
-          const y = Math.sin(t) * r * wobble;
-          const rx = cx + x * Math.cos(tilt) - y * Math.sin(tilt);
-          const ry = cy + x * Math.sin(tilt) + y * Math.cos(tilt);
-          if (a === 0) g.moveTo(rx, ry);
-          else g.lineTo(rx, ry);
-        }
-        g.stroke();
+    // Fingerprints, upright as a thumb lands: two from a right thumb working the keys
+    // low on the right, a fainter one up top from opening the flip, one smudged.
+    if (prints.naturalWidth) {
+      const size = Math.min(W, H) * 0.36;
+      const placed: [number, number, number, number, number, number][] = [
+        // [print, x, y, height, tilt (deg), alpha]
+        [0, 0.74, 0.66, size, -14, 0.34],
+        [1, 0.86, 0.4, size * 0.92, -8, 0.28],
+        [2, 0.3, 0.16, size * 0.7, 6, 0.18],
+        [3, 0.52, 0.82, size * 0.85, -20, 0.22],
+      ];
+      for (const [k, u, v, height, tilt, alpha] of placed) {
+        g.save();
+        g.translate(W * u, H * v);
+        g.rotate((tilt * Math.PI) / 180);
+        g.globalAlpha = alpha;
+        g.filter = k === 3 ? "blur(2px)" : "blur(0.5px)"; // the last one smeared
+        g.drawImage(prints, k * PRINT_CELL, 0, PRINT_CELL, PRINT_CELL, -height / 2, -height / 2, height, height);
+        g.restore();
       }
     }
-    g.setLineDash([]);
-    g.restore();
 
     // Dust, and the odd fibre.
     for (let i = 0; i < 90; i++) {
@@ -225,52 +248,20 @@ export async function createFlip(canvas: HTMLCanvasElement, rows: HTMLElement[])
     }
   }
 
-  // The "photo": framebuffer through subpixels and bloom, a slightly soft and flat
-  // camera, an unevenly lit backlight, film grain. Runs only when the screen changes
-  // (a new row, the clock), never per pointer move; the bloom blurs the small framebuffer.
+  // Runs only when the screen changes (a new row, the clock), never per pointer move.
   function present() {
-    const W = canvas.width;
-    const H = canvas.height;
-    const s = sharp;
-    s.globalCompositeOperation = "source-over";
-    s.imageSmoothingEnabled = false;
-    s.drawImage(screen, 0, 0, W, H);
-    s.globalCompositeOperation = "multiply";
-    s.fillStyle = subpixels!;
-    s.fillRect(0, 0, W, H);
-    // Bright pixels bleed light into their neighbours.
-    glow.filter = "blur(1.3px)";
-    glow.clearRect(0, 0, w, h);
-    glow.drawImage(screen, 0, 0);
-    glow.filter = "none";
-    s.globalCompositeOperation = "screen";
-    s.globalAlpha = 0.5;
-    s.imageSmoothingEnabled = true;
-    s.drawImage(glow.canvas, 0, 0, W, H);
-    s.globalAlpha = 1;
-    s.globalCompositeOperation = "source-over";
-
-    photo.filter = `blur(${Math.max(0.7, tile * 0.2)}px) contrast(0.88) saturate(0.9) brightness(1.08)`;
-    photo.drawImage(s.canvas, 0, 0);
-    photo.filter = "none";
-    photo.globalCompositeOperation = "multiply";
-    const backlight = photo.createRadialGradient(W * 0.5, H * 0.58, Math.min(W, H) * 0.15, W * 0.5, H * 0.58, Math.max(W, H) * 0.8);
-    backlight.addColorStop(0, "#ffffff");
-    backlight.addColorStop(1, "#8a8c99");
-    photo.fillStyle = backlight;
-    photo.fillRect(0, 0, W, H);
-    photo.globalCompositeOperation = "screen";
-    const bleed = photo.createLinearGradient(0, H, 0, H * 0.8);
-    bleed.addColorStop(0, "rgba(120,170,255,0.16)");
-    bleed.addColorStop(1, "rgba(120,170,255,0)");
-    photo.fillStyle = bleed;
-    photo.fillRect(0, 0, W, H);
-    photo.globalCompositeOperation = "overlay";
-    photo.globalAlpha = 0.12;
-    photo.fillStyle = grain!;
-    photo.fillRect(0, 0, W, H);
-    photo.globalAlpha = 1;
-    photo.globalCompositeOperation = "source-over";
+    if (!gl) {
+      fallback!.imageSmoothingEnabled = false;
+      fallback!.drawImage(screen, 0, 0, canvas.width, canvas.height);
+      return;
+    }
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, screen);
+    gl.uniform1i(uniforms.uScreen, 0);
+    gl.uniform2f(uniforms.uSize, w, h);
+    gl.uniform2f(uniforms.uCanvas, canvas.width, canvas.height);
+    gl.uniform1f(uniforms.uTile, tile);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 
   // A menu row's band on the screen, in screen pixels.
@@ -458,7 +449,7 @@ export async function createFlip(canvas: HTMLCanvasElement, rows: HTMLElement[])
   // The backlight: dims after a while untouched, wakes on any movement.
   window.addEventListener("mousemove", () => {
     lastMove = performance.now();
-    if (running) root.classList.remove("flip-dim");
+    if (root.classList.contains("flip-dim")) root.classList.remove("flip-dim"); // only touch the DOM to wake it
   });
 
   let pending = 0;
