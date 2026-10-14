@@ -18,7 +18,7 @@ const THEME_FONTS: Record<string, string> = {
 const SCENES: Record<string, { module: string; create: string }> = {
   aero: { module: "/static/js/aero.js?v=27", create: "createAero" },
   crochet: { module: "/static/js/crochet.js?v=8", create: "createCrochet" },
-  flip: { module: "/static/js/flip.js?v=10", create: "createFlip" },
+  flip: { module: "/static/js/flip.js?v=11", create: "createFlip" },
 };
 
 // ---- Liquid shader: domain-warped fbm, looped by moving time around a circle ----

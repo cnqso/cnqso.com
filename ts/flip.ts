@@ -298,6 +298,11 @@ export async function createFlip(canvas: HTMLCanvasElement, rows: HTMLElement[])
     ctx.globalAlpha = 1;
   }
 
+  function measure(str: string, size: number) {
+    ink.font = `bold ${size}px ${FONT}`;
+    return ink.measureText(str).width;
+  }
+
   function icon(bits: string, right: number, top: number, scale: number, color: string) {
     ctx.fillStyle = color;
     for (let y = 0; y < 8; y++) {
@@ -363,21 +368,30 @@ export async function createFlip(canvas: HTMLCanvasElement, rows: HTMLElement[])
     header.addColorStop(1, active === 0 ? "#c86f0c" : "#071b52");
     ctx.fillStyle = header;
     ctx.fillRect(0, top, w, bottom - top);
-    const tall = bottom - top;
+    // Sized by the bar's width as well as its height: on a narrow, tall screen the
+    // rows are tall but there's little room across.
+    const mid = top + (bottom - top) / 2;
+    const tall = Math.min(bottom - top, w / 9);
     const fg = active === 0 ? "#1a0f00" : "#ffffff";
     const bars = 3 + Math.floor((Date.now() / 7000) % 3); // reception wanders
     const u = Math.max(1, Math.round(tall / 12)); // status icon unit
+    const baseline = mid + tall * 0.22;
     ctx.fillStyle = fg;
     for (let b = 0; b < 5; b++) {
       const barHeight = Math.round(((b + 1) / 5) * tall * 0.55);
-      if (b < bars) ctx.fillRect(3 + b * 3 * u, top + tall * 0.75 - barHeight, 2 * u, barHeight);
-      else ctx.fillRect(3 + b * 3 * u, top + tall * 0.75 - u, 2 * u, u);
+      if (b < bars) ctx.fillRect(3 + b * 3 * u, mid + tall * 0.25 - barHeight, 2 * u, barHeight);
+      else ctx.fillRect(3 + b * 3 * u, mid + tall * 0.25 - u, 2 * u, u);
     }
     const now = new Date();
     const clock = `${arabicNumber(now.getHours() % 12 || 12)}:${arabicNumber(now.getMinutes())}`;
-    text(clock, 6 + 15 * u, top + tall * 0.72, Math.round(tall * 0.55), fg, "left");
-    text(LABELS[rows[0].dataset.text || ""] || "كنقسو", w / 2, top + tall * 0.72, Math.round(tall * 0.62), fg, "center");
-    const battery = Math.round(top + tall * 0.32);
+    const clockSize = Math.round(tall * 0.55);
+    text(clock, 6 + 15 * u, baseline, clockSize, fg, "left");
+    // The network's name stays centred, shrunk if it would run into the clock or battery.
+    const name = LABELS[rows[0].dataset.text || ""] || "كنقسو";
+    const room = 2 * Math.min(w / 2 - (6 + 15 * u + measure(clock, clockSize) + 2 * u), w - 5 - 14 * u - w / 2);
+    const nameSize = Math.round(tall * 0.62);
+    text(name, w / 2, baseline, Math.min(nameSize, Math.floor((nameSize * room) / measure(name, nameSize))), fg, "center");
+    const battery = Math.round(mid - tall * 0.18);
     ctx.fillRect(w - 5 - 12 * u, battery, 11 * u, u); // outline
     ctx.fillRect(w - 5 - 12 * u, battery + 5 * u, 11 * u, u);
     ctx.fillRect(w - 5 - 12 * u, battery, u, 6 * u);
