@@ -16,7 +16,7 @@ const THEME_FONTS: Record<string, string> = {
 // Heavier themes live in their own modules, fetched and prepared ahead of time (see
 // prepareAhead below), so every switch starts instantly.
 const SCENES: Record<string, { module: string; create: string }> = {
-  aero: { module: "/static/js/aero.js?v=27", create: "createAero" },
+  aero: { module: "/static/js/aero.js?v=29", create: "createAero" },
   crochet: { module: "/static/js/crochet.js?v=8", create: "createCrochet" },
   flip: { module: "/static/js/flip.js?v=11", create: "createFlip" },
 };

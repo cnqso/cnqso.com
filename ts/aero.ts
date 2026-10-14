@@ -256,7 +256,11 @@ export async function createAero(canvas: HTMLCanvasElement, rows: HTMLElement[])
       geometry.computeBoundingBox();
       const box = geometry.boundingBox;
       geometry.translate(-(box.min.x + box.max.x) / 2, 0, -0.15);
-      geometry.computeVertexNormals();
+      // A few glyphs' bevels have zero-area triangles with zero normals, which shade
+      // as NaN; bloom would spread each such pixel into a flashing black box.
+      const normals = geometry.attributes.normal;
+      for (let i = 0; i < normals.count; i++)
+        if (!normals.getX(i) && !normals.getY(i) && !normals.getZ(i)) normals.setXYZ(i, 0, 0, 1);
       geometries.set(ch, geometry);
     }
     return geometry;
