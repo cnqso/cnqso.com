@@ -27,8 +27,7 @@ import (
 
 var KnownPostIDs map[string]bool
 
-// The AM and PM jobs share KnownPostIDs, so only one scrape runs at a time
-// (both fire at once when a sleeping machine wakes after missing them).
+// Scrapes share KnownPostIDs, so only one runs at a time.
 var scraping sync.Mutex
 
 var Scraper = colly.NewCollector(

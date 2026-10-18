@@ -57,16 +57,6 @@ func addJobs() {
 			Func: GetWordle,
 			Name: "GetWordle",
 		},
-		{
-			Spec: "0 7 9 * * *",
-			Func: ScrapePetrarchan,
-			Name: "ScrapePetrarchan AM",
-		},
-		{
-			Spec: "0 7 21 * * *",
-			Func: ScrapePetrarchan,
-			Name: "ScrapePetrarchan PM",
-		},
 	}
 
 	registerJobs(jobs)
