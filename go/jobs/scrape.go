@@ -6,7 +6,6 @@ import (
 	"image/jpeg"
 	"image/png"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -14,6 +13,7 @@ import (
 	"server/logs"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	_ "image/gif"
@@ -27,11 +27,21 @@ import (
 
 var KnownPostIDs map[string]bool
 
+// The AM and PM jobs share KnownPostIDs, so only one scrape runs at a time
+// (both fire at once when a sleeping machine wakes after missing them).
+var scraping sync.Mutex
+
 var Scraper = colly.NewCollector(
 	colly.UserAgent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"),
 )
 
 func ScrapePetrarchan() {
+	if !scraping.TryLock() {
+		logs.INFO("Scrape already running, skipping")
+		return
+	}
+	defer scraping.Unlock()
+
 	startTime := time.Now()
 	// logs.INFO("Starting catalog scrape...")
 
@@ -43,14 +53,17 @@ func ScrapePetrarchan() {
 	loadKnownPostIDs()
 	// logs.INFO(fmt.Sprintf("Loaded %d known post IDs from database", len(KnownPostIDs)))
 
+	// An unreachable catalog skips this scrape; it must not take the site down with it.
 	threads, err := fetchPetrarchanCatalog()
 	if err != nil {
-		log.Fatal(err)
+		logs.ERROR(fmt.Sprintf("Error fetching catalog: %v", err))
+		return
 	}
 
 	threadsToScrape, newCount, updatedCount, err := processCatalogUpdates(threads)
 	if err != nil {
-		log.Fatal(err)
+		logs.ERROR(fmt.Sprintf("Error processing catalog: %v", err))
+		return
 	}
 	logs.INFO(fmt.Sprintf("Identified %d new threads and %d updated threads to scrape", newCount, updatedCount))
 
