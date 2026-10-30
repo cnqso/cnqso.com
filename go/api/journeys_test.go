@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"html/template"
 	"net/http/httptest"
+	"regexp"
 	"server/db"
 	"strings"
 	"testing"
@@ -38,7 +39,7 @@ func TestJourneysArePrivateAndPaginateWithoutMixingBrowsers(t *testing.T) {
 	}
 	db.DB.SetMaxOpenConns(1)
 	t.Cleanup(func() { db.DB.Close(); db.DB = old })
-	_, err = db.DB.Exec(`CREATE TABLE access_logs(id INTEGER PRIMARY KEY,timestamp DATETIME,visitor_id TEXT,event_kind TEXT,url TEXT,referrer TEXT,method TEXT,status_code INTEGER,fingerprint TEXT,user_agent TEXT)`)
+	_, err = db.DB.Exec(`CREATE TABLE access_logs(id INTEGER PRIMARY KEY,timestamp DATETIME,visitor_id TEXT,event_kind TEXT,url TEXT,referrer TEXT,method TEXT,status_code INTEGER,fingerprint TEXT,user_agent TEXT,client_ip TEXT)`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -95,7 +96,7 @@ func TestJourneysFilterBotsAndSinglePageBrowsers(t *testing.T) {
 	}
 	db.DB.SetMaxOpenConns(1)
 	t.Cleanup(func() { db.DB.Close(); db.DB = old })
-	_, err = db.DB.Exec(`CREATE TABLE access_logs(id INTEGER PRIMARY KEY,timestamp DATETIME,visitor_id TEXT,event_kind TEXT,url TEXT,referrer TEXT,method TEXT,status_code INTEGER,fingerprint TEXT,user_agent TEXT)`)
+	_, err = db.DB.Exec(`CREATE TABLE access_logs(id INTEGER PRIMARY KEY,timestamp DATETIME,visitor_id TEXT,event_kind TEXT,url TEXT,referrer TEXT,method TEXT,status_code INTEGER,fingerprint TEXT,user_agent TEXT,client_ip TEXT)`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -119,7 +120,7 @@ func TestJourneysFilterBotsAndSinglePageBrowsers(t *testing.T) {
 			if u == "/" {
 				status = 200
 			}
-			if _, err = db.DB.Exec("INSERT INTO access_logs(timestamp,visitor_id,event_kind,url,method,status_code,user_agent) VALUES(?,?,?,?,?,?,?)", time.Now().UTC(), v.id, "page", u, "GET", status, v.agent); err != nil {
+			if _, err = db.DB.Exec("INSERT INTO access_logs(timestamp,visitor_id,event_kind,url,method,status_code,user_agent,client_ip) VALUES(?,?,?,?,?,?,?,?)", time.Now().UTC(), v.id, "page", u, "GET", status, v.agent, "203.0.113."+v.id[:1]); err != nil {
 				t.Fatal(err)
 			}
 		}
@@ -143,6 +144,9 @@ func TestJourneysFilterBotsAndSinglePageBrowsers(t *testing.T) {
 		}
 		if got != want {
 			t.Fatalf("%q: got browsers %q, want %q", query, got, want)
+		}
+		if query == "" && (!strings.Contains(w.Body.String(), `href="/dashboard/ip/203.0.113.1"`) || !regexp.MustCompile(` [AP]M E[SD]T`).MatchString(w.Body.String())) {
+			t.Fatalf("summary lacks IP or Eastern time: %s", w.Body.String())
 		}
 	}
 }

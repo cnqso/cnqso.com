@@ -15,9 +15,19 @@ import (
 const journeyPageSize = 200
 
 type journeyVisitor struct {
-	ID, Label, LastSeen string
-	Pages, Downloads    int
+	ID, Label, LastSeen, IP string
+	Pages, Downloads, IPs   int
 }
+
+// Summaries are read by the site owner, who works in Eastern time.
+var journeyLocation = func() *time.Location {
+	loc, err := time.LoadLocation("America/Detroit")
+	if err != nil {
+		return time.UTC
+	}
+	return loc
+}()
+
 type journeyOverview struct {
 	Visitors        []journeyVisitor
 	Older           string
@@ -79,7 +89,7 @@ func JourneysHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 	defer cancel()
 	data := journeyOverview{ShowBots: r.URL.Query().Get("bots") == "show", Multi: r.URL.Query().Get("multi") == "1"}
-	query := `SELECT visitor_id,MAX(id),MAX(timestamp),SUM(event_kind='page'),SUM(event_kind='download') FROM access_logs
+	query := `SELECT visitor_id,MAX(id) AS last_id,MAX(timestamp),SUM(event_kind='page'),SUM(event_kind='download'),COUNT(DISTINCT client_ip) FROM access_logs
  WHERE visitor_id IS NOT NULL AND visitor_id!='' AND event_kind IN ('page','download') AND timestamp>=datetime('now','-30 days')
  GROUP BY visitor_id HAVING (?=0 OR MAX(id)<?)`
 	args := []any{before, before}
@@ -91,7 +101,9 @@ func JourneysHandler(w http.ResponseWriter, r *http.Request) {
 		query += " AND " + clause
 		args = append(args, botArgs...)
 	}
-	rows, err := db.DB.QueryContext(ctx, query+" ORDER BY MAX(id) DESC LIMIT 51", args...)
+	// The newest event's IP is joined back after grouping.
+	query = "SELECT g.*,COALESCE(l.client_ip,'') FROM (" + query + " ORDER BY MAX(id) DESC LIMIT 51) g JOIN access_logs l ON l.id=g.last_id ORDER BY g.last_id DESC"
+	rows, err := db.DB.QueryContext(ctx, query, args...)
 	if err != nil {
 		http.Error(w, "Unable to load journeys", 500)
 		return
@@ -109,7 +121,7 @@ func JourneysHandler(w http.ResponseWriter, r *http.Request) {
 		var v journeyVisitor
 		var at string
 		var id int64
-		if err = rows.Scan(&v.ID, &id, &at, &v.Pages, &v.Downloads); err != nil {
+		if err = rows.Scan(&v.ID, &id, &at, &v.Pages, &v.Downloads, &v.IPs, &v.IP); err != nil {
 			http.Error(w, "Unable to load journeys", 500)
 			return
 		}
@@ -125,7 +137,7 @@ func JourneysHandler(w http.ResponseWriter, r *http.Request) {
 		v.LastSeen = at
 		for _, layout := range []string{time.RFC3339Nano, "2006-01-02 15:04:05.999999999-07:00"} {
 			if parsed, err := time.Parse(layout, at); err == nil {
-				v.LastSeen = parsed.UTC().Format("Jan 2, 15:04 UTC")
+				v.LastSeen = parsed.In(journeyLocation).Format("Jan 2, 3:04 PM MST")
 				break
 			}
 		}
