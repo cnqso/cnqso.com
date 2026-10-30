@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"server/geo"
 	"server/logs"
 
 	"github.com/robfig/cron/v3"
@@ -56,6 +57,12 @@ func addJobs() {
 			Spec: "0 7 9 * * *",
 			Func: GetWordle,
 			Name: "GetWordle",
+		},
+		{
+			// DB-IP publishes on the 1st; Refresh falls back if it is late.
+			Spec: "0 30 6 3 * *",
+			Func: func() { geo.Refresh() },
+			Name: "RefreshGeolocation",
 		},
 	}
 

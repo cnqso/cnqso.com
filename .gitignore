@@ -5,6 +5,8 @@
 /wordle-data/
 /go/server
 /go/db/*.db*
+/go/db/*.mmdb
+/go/db/.geo-*
 /go/odir/
 /go/static/js/*
 /go/static/petrarchive/*

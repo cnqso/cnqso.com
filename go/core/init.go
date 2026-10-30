@@ -11,6 +11,7 @@ import (
 	"server/api"
 	"server/config"
 	"server/db"
+	"server/geo"
 	"server/jobs"
 	"server/logs"
 	"strings"
@@ -26,6 +27,7 @@ func Init() {
 	}
 
 	logs.StartWriter()
+	geo.Init()
 
 	// Go has no built-in type for 3D models; gzip only compresses types it can name.
 	mime.AddExtensionType(".glb", "model/gltf-binary")

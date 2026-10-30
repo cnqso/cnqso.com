@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"server/config"
 	"server/db"
+	"server/geo"
 	"strconv"
 	"time"
 )
@@ -15,8 +16,8 @@ import (
 const journeyPageSize = 200
 
 type journeyVisitor struct {
-	ID, Label, LastSeen, IP string
-	Pages, Downloads, IPs   int
+	ID, Label, LastSeen, IP, Region string
+	Pages, Downloads, IPs           int
 }
 
 // Summaries are read by the site owner, who works in Eastern time.
@@ -148,6 +149,7 @@ func JourneysHandler(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 		}
+		v.Region = geo.Lookup(v.IP)
 		data.Visitors = append(data.Visitors, v)
 		last = id
 	}
