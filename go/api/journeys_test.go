@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"regexp"
 	"server/db"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -113,31 +114,50 @@ func TestJourneysFilterBotsAndSinglePageBrowsers(t *testing.T) {
 		{"44444444444444444444444444444444", "Mozilla/5.0 (compatible; Googlebot/2.1)", []string{"/", "/odir/"}, 200},
 		{"55555555555555555555555555555555", browser, []string{"/a1", "/a2", "/a3", "/"}, 404},
 		{"66666666666666666666666666666666", browser, []string{"/wp-content/x.PHP", "/"}, 200},
+		{"77777777777777777777777777777777", browser, []string{"/", "/"}, 200},
+		{"88888888888888888888888888888888", browser, []string{"/", "/", "asset:/static/images/secretdoor.png", "asset:/.well-known/appspecific/com.chrome.devtools.json"}, 200},
+		{"99999999999999999999999999999999", browser, []string{"/", "/blog/"}, 200},
+		{"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", browser, []string{"/", "/odir/", "asset:/robots.txt"}, 200},
+	}
+	insert := func(visitor, kind, u string, status int, agent, ip string) {
+		if _, err := db.DB.Exec("INSERT INTO access_logs(timestamp,visitor_id,event_kind,url,method,status_code,user_agent,client_ip) VALUES(?,?,?,?,?,?,?,?)", time.Now().UTC(), visitor, kind, u, "GET", status, agent, ip); err != nil {
+			t.Fatal(err)
+		}
 	}
 	for _, v := range visits {
 		for _, u := range v.urls {
-			status := v.status
-			if u == "/" {
+			kind, status := "page", v.status
+			if after, ok := strings.CutPrefix(u, "asset:"); ok {
+				kind, u = "", after
+			}
+			if u == "/" || kind == "" {
 				status = 200
 			}
-			if _, err = db.DB.Exec("INSERT INTO access_logs(timestamp,visitor_id,event_kind,url,method,status_code,user_agent,client_ip) VALUES(?,?,?,?,?,?,?,?)", time.Now().UTC(), v.id, "page", u, "GET", status, v.agent, "203.0.113."+v.id[:1]); err != nil {
-				t.Fatal(err)
-			}
+			insert(v.id, kind, u, status, v.agent, "203.0.113."+v.id[:1])
 		}
 	}
+	// A Chrome-like crawler that fetched every page within a second.
+	for i := 0; i < 12; i++ {
+		insert("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "page", "/blog/"+strconv.Itoa(i), 200, browser, "198.51.100.1")
+	}
+	insert("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "", "/static/js/hexagons.js", 200, browser, "198.51.100.1")
+	// A crawler without the cookie fetched robots.txt from browser 9's IP today.
+	insert("", "", "/robots.txt", 200, browser, "203.0.113.9")
 	cookie, _ := loginLibrary(t)
 	for query, want := range map[string]string{
-		"":                   "12",
-		"?multi=1":           "1",
-		"?bots=show":         "123456",
-		"?bots=show&multi=1": "13456",
+		"":                    "1278",
+		"?multi=1":            "178",
+		"?rendered=1":         "8",
+		"?multi=1&rendered=1": "8",
+		"?bots=show":          "123456789ab",
+		"?bots=show&multi=1":  "13456789ab",
 	} {
 		r := libraryRequest("GET", "/dashboard/journeys"+query, nil)
 		r.AddCookie(cookie)
 		w := httptest.NewRecorder()
 		JourneysHandler(w, r)
 		got := ""
-		for _, c := range "123456" {
+		for _, c := range "123456789ab" {
 			if strings.Contains(w.Body.String(), "Browser "+strings.Repeat(string(c), 8)) {
 				got += string(c)
 			}

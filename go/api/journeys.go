@@ -29,9 +29,9 @@ var journeyLocation = func() *time.Location {
 }()
 
 type journeyOverview struct {
-	Visitors        []journeyVisitor
-	Older           string
-	ShowBots, Multi bool
+	Visitors                  []journeyVisitor
+	Older                     string
+	ShowBots, Multi, Rendered bool
 }
 type journeyEvent struct {
 	ID                                int64
@@ -88,13 +88,17 @@ func JourneysHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 	defer cancel()
-	data := journeyOverview{ShowBots: r.URL.Query().Get("bots") == "show", Multi: r.URL.Query().Get("multi") == "1"}
+	q := r.URL.Query()
+	data := journeyOverview{ShowBots: q.Get("bots") == "show", Multi: q.Get("multi") == "1", Rendered: q.Get("rendered") == "1"}
 	query := `SELECT visitor_id,MAX(id) AS last_id,MAX(timestamp),SUM(event_kind='page'),SUM(event_kind='download'),COUNT(DISTINCT client_ip) FROM access_logs
- WHERE visitor_id IS NOT NULL AND visitor_id!='' AND event_kind IN ('page','download') AND timestamp>=datetime('now','-30 days')
- GROUP BY visitor_id HAVING (?=0 OR MAX(id)<?)`
+ WHERE visitor_id IS NOT NULL AND visitor_id!='' AND timestamp>=datetime('now','-30 days')
+ GROUP BY visitor_id HAVING SUM(event_kind IN ('page','download'))>0 AND (?=0 OR MAX(id)<?)`
 	args := []any{before, before}
 	if data.Multi {
 		query += " AND SUM(event_kind='page')>1"
+	}
+	if data.Rendered {
+		query += " AND " + journeyRenderedHaving
 	}
 	if !data.ShowBots {
 		clause, botArgs := journeyBotHaving()
@@ -115,6 +119,9 @@ func JourneysHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if data.Multi {
 		params.Set("multi", "1")
+	}
+	if data.Rendered {
+		params.Set("rendered", "1")
 	}
 	var last int64
 	for rows.Next() {
