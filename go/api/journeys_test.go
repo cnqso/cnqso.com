@@ -38,7 +38,7 @@ func TestJourneysArePrivateAndPaginateWithoutMixingBrowsers(t *testing.T) {
 	}
 	db.DB.SetMaxOpenConns(1)
 	t.Cleanup(func() { db.DB.Close(); db.DB = old })
-	_, err = db.DB.Exec(`CREATE TABLE access_logs(id INTEGER PRIMARY KEY,timestamp DATETIME,visitor_id TEXT,event_kind TEXT,url TEXT,referrer TEXT,method TEXT,status_code INTEGER,fingerprint TEXT)`)
+	_, err = db.DB.Exec(`CREATE TABLE access_logs(id INTEGER PRIMARY KEY,timestamp DATETIME,visitor_id TEXT,event_kind TEXT,url TEXT,referrer TEXT,method TEXT,status_code INTEGER,fingerprint TEXT,user_agent TEXT)`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -81,6 +81,68 @@ func TestJourneysArePrivateAndPaginateWithoutMixingBrowsers(t *testing.T) {
 		}
 		if strings.Contains(path, "before=6") && strings.Count(w.Body.String(), "GET /page") != 5 {
 			t.Fatal("older page did not contain remaining events")
+		}
+	}
+}
+
+func TestJourneysFilterBotsAndSinglePageBrowsers(t *testing.T) {
+	setupLibrary(t)
+	old := db.DB
+	var err error
+	db.DB, err = sql.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	db.DB.SetMaxOpenConns(1)
+	t.Cleanup(func() { db.DB.Close(); db.DB = old })
+	_, err = db.DB.Exec(`CREATE TABLE access_logs(id INTEGER PRIMARY KEY,timestamp DATETIME,visitor_id TEXT,event_kind TEXT,url TEXT,referrer TEXT,method TEXT,status_code INTEGER,fingerprint TEXT,user_agent TEXT)`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	Templates["journeys.html"] = template.Must(template.ParseFiles("../templates/journeys.html"))
+	browser := "Mozilla/5.0 (X11; Linux x86_64) Firefox/140.0"
+	visits := []struct {
+		id, agent string
+		urls      []string
+		status    int
+	}{
+		{"11111111111111111111111111111111", browser, []string{"/", "/blog/"}, 200},
+		{"22222222222222222222222222222222", browser, []string{"/"}, 200},
+		{"33333333333333333333333333333333", browser, []string{"/", "/.env.local"}, 200},
+		{"44444444444444444444444444444444", "Mozilla/5.0 (compatible; Googlebot/2.1)", []string{"/", "/odir/"}, 200},
+		{"55555555555555555555555555555555", browser, []string{"/a1", "/a2", "/a3", "/"}, 404},
+		{"66666666666666666666666666666666", browser, []string{"/wp-content/x.PHP", "/"}, 200},
+	}
+	for _, v := range visits {
+		for _, u := range v.urls {
+			status := v.status
+			if u == "/" {
+				status = 200
+			}
+			if _, err = db.DB.Exec("INSERT INTO access_logs(timestamp,visitor_id,event_kind,url,method,status_code,user_agent) VALUES(?,?,?,?,?,?,?)", time.Now().UTC(), v.id, "page", u, "GET", status, v.agent); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	cookie, _ := loginLibrary(t)
+	for query, want := range map[string]string{
+		"":                   "12",
+		"?multi=1":           "1",
+		"?bots=show":         "123456",
+		"?bots=show&multi=1": "13456",
+	} {
+		r := libraryRequest("GET", "/dashboard/journeys"+query, nil)
+		r.AddCookie(cookie)
+		w := httptest.NewRecorder()
+		JourneysHandler(w, r)
+		got := ""
+		for _, c := range "123456" {
+			if strings.Contains(w.Body.String(), "Browser "+strings.Repeat(string(c), 8)) {
+				got += string(c)
+			}
+		}
+		if got != want {
+			t.Fatalf("%q: got browsers %q, want %q", query, got, want)
 		}
 	}
 }

@@ -19,8 +19,9 @@ type journeyVisitor struct {
 	Pages, Downloads    int
 }
 type journeyOverview struct {
-	Visitors []journeyVisitor
-	Older    string
+	Visitors        []journeyVisitor
+	Older           string
+	ShowBots, Multi bool
 }
 type journeyEvent struct {
 	ID                                int64
@@ -77,15 +78,32 @@ func JourneysHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 	defer cancel()
-	rows, err := db.DB.QueryContext(ctx, `SELECT visitor_id,MAX(id),MAX(timestamp),SUM(event_kind='page'),SUM(event_kind='download') FROM access_logs
+	data := journeyOverview{ShowBots: r.URL.Query().Get("bots") == "show", Multi: r.URL.Query().Get("multi") == "1"}
+	query := `SELECT visitor_id,MAX(id),MAX(timestamp),SUM(event_kind='page'),SUM(event_kind='download') FROM access_logs
  WHERE visitor_id IS NOT NULL AND visitor_id!='' AND event_kind IN ('page','download') AND timestamp>=datetime('now','-30 days')
- GROUP BY visitor_id HAVING (?=0 OR MAX(id)<?) ORDER BY MAX(id) DESC LIMIT 51`, before, before)
+ GROUP BY visitor_id HAVING (?=0 OR MAX(id)<?)`
+	args := []any{before, before}
+	if data.Multi {
+		query += " AND SUM(event_kind='page')>1"
+	}
+	if !data.ShowBots {
+		clause, botArgs := journeyBotHaving()
+		query += " AND " + clause
+		args = append(args, botArgs...)
+	}
+	rows, err := db.DB.QueryContext(ctx, query+" ORDER BY MAX(id) DESC LIMIT 51", args...)
 	if err != nil {
 		http.Error(w, "Unable to load journeys", 500)
 		return
 	}
 	defer rows.Close()
-	data := journeyOverview{}
+	params := url.Values{}
+	if data.ShowBots {
+		params.Set("bots", "show")
+	}
+	if data.Multi {
+		params.Set("multi", "1")
+	}
 	var last int64
 	for rows.Next() {
 		var v journeyVisitor
@@ -96,7 +114,8 @@ func JourneysHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if len(data.Visitors) == 50 {
-			data.Older = "/dashboard/journeys?before=" + strconv.FormatInt(last, 10)
+			params.Set("before", strconv.FormatInt(last, 10))
+			data.Older = "/dashboard/journeys?" + params.Encode()
 			break
 		}
 		if !validVisitorID(v.ID) {
