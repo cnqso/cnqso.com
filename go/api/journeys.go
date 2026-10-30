@@ -30,9 +30,9 @@ var journeyLocation = func() *time.Location {
 }()
 
 type journeyOverview struct {
-	Visitors                  []journeyVisitor
-	Older                     string
-	ShowBots, Multi, Rendered bool
+	Visitors                      []journeyVisitor
+	Older                         string
+	ShowBots, Multi, Rendered, US bool
 }
 type journeyEvent struct {
 	ID                                int64
@@ -90,7 +90,7 @@ func JourneysHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 	defer cancel()
 	q := r.URL.Query()
-	data := journeyOverview{ShowBots: q.Get("bots") == "show", Multi: q.Get("multi") == "1", Rendered: q.Get("rendered") == "1"}
+	data := journeyOverview{ShowBots: q.Get("bots") == "show", Multi: q.Get("multi") == "1", Rendered: q.Get("rendered") == "1", US: q.Get("us") == "1"}
 	query := `SELECT visitor_id,MAX(id) AS last_id,MAX(timestamp),SUM(event_kind='page'),SUM(event_kind='download'),COUNT(DISTINCT client_ip) FROM access_logs
  WHERE visitor_id IS NOT NULL AND visitor_id!='' AND timestamp>=datetime('now','-30 days')
  GROUP BY visitor_id HAVING SUM(event_kind IN ('page','download'))>0 AND (?=0 OR MAX(id)<?)`
@@ -106,8 +106,13 @@ func JourneysHandler(w http.ResponseWriter, r *http.Request) {
 		query += " AND " + clause
 		args = append(args, botArgs...)
 	}
+	// Countries come from the geo database, so that filter reads until it has a page.
+	query += " ORDER BY MAX(id) DESC"
+	if !data.US {
+		query += " LIMIT 51"
+	}
 	// The newest event's IP is joined back after grouping.
-	query = "SELECT g.*,COALESCE(l.client_ip,'') FROM (" + query + " ORDER BY MAX(id) DESC LIMIT 51) g JOIN access_logs l ON l.id=g.last_id ORDER BY g.last_id DESC"
+	query = "SELECT g.*,COALESCE(l.client_ip,'') FROM (" + query + ") g JOIN access_logs l ON l.id=g.last_id ORDER BY g.last_id DESC"
 	rows, err := db.DB.QueryContext(ctx, query, args...)
 	if err != nil {
 		http.Error(w, "Unable to load journeys", 500)
@@ -124,6 +129,9 @@ func JourneysHandler(w http.ResponseWriter, r *http.Request) {
 	if data.Rendered {
 		params.Set("rendered", "1")
 	}
+	if data.US {
+		params.Set("us", "1")
+	}
 	var last int64
 	for rows.Next() {
 		var v journeyVisitor
@@ -133,13 +141,13 @@ func JourneysHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Unable to load journeys", 500)
 			return
 		}
+		if !validVisitorID(v.ID) || (data.US && geo.Country(v.IP) != "US") {
+			continue
+		}
 		if len(data.Visitors) == 50 {
 			params.Set("before", strconv.FormatInt(last, 10))
 			data.Older = "/dashboard/journeys?" + params.Encode()
 			break
-		}
-		if !validVisitorID(v.ID) {
-			continue
 		}
 		v.Label = "Browser " + v.ID[:8]
 		v.LastSeen = at

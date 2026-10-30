@@ -125,20 +125,25 @@ func open(path string) error {
 	return nil
 }
 
+func find(ip string) (record, bool) {
+	var r record
+	addr, err := netip.ParseAddr(ip)
+	if err != nil || addr.IsPrivate() || addr.IsLoopback() {
+		return r, false
+	}
+	mu.RLock()
+	defer mu.RUnlock()
+	if reader == nil {
+		return r, false
+	}
+	return r, reader.Lookup(addr.Unmap()).Decode(&r) == nil
+}
+
 // Lookup returns a label such as "Ann Arbor, Michigan, US", or "" when the IP is
 // private, unknown, or no database is loaded.
 func Lookup(ip string) string {
-	addr, err := netip.ParseAddr(ip)
-	if err != nil || addr.IsPrivate() || addr.IsLoopback() {
-		return ""
-	}
-	var r record
-	mu.RLock()
-	if reader != nil {
-		err = reader.Lookup(addr.Unmap()).Decode(&r)
-	}
-	mu.RUnlock()
-	if err != nil {
+	r, ok := find(ip)
+	if !ok {
 		return ""
 	}
 	var parts []string
@@ -148,6 +153,12 @@ func Lookup(ip string) string {
 		}
 	}
 	return strings.Join(parts, ", ")
+}
+
+// Country returns the IP's ISO 3166 country code, or "" when it is unknown.
+func Country(ip string) string {
+	r, _ := find(ip)
+	return r.Country.ISOCode
 }
 
 func firstName(subdivisions []struct {
